@@ -1,0 +1,14 @@
+﻿metric,value,unit_or_note
+observation_download_date,2026-02-03,iNaturalist data download date
+observation_cutoff,2025-12-31,observations were prior to 2026-01-01
+quality_filter,Research Grade,identified to species level or lower
+observations,296749,Australian butterfly observations
+observed_species,393,species represented in iNaturalist dataset
+baseline_australian_species,462,Australian butterfly species after taxonomic alignment
+observed_species_percent,85.1,percent of baseline fauna
+range_extensions,84,species
+range_expansions,17,species
+vagrant_species,41,species
+contributors_approx,22000,iNaturalist users
+paper_publication_date,2026-04-07,Austral Entomology
+paper_doi,10.1111/aen.70067,open-access article

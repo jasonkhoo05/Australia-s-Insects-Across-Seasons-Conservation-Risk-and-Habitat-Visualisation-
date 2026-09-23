@@ -1,0 +1,11 @@
+﻿file,field,meaning
+dcceew_threatened_insects_2026.csv,taxon_id,DCCEEW/SPRAT taxon identifier
+dcceew_threatened_insects_2026.csv,epbc_status_code,CR=Critically Endangered; EN=Endangered; VU=Vulnerable
+dcceew_threatened_insects_2026.csv,jurisdictions,Pipe-separated DCCEEW state/territory indications
+combined_threatened_insects_by_state_2026.csv,state_code_2026,ABS ASGS Edition 4 one-digit state code
+combined_threatened_insects_state_summary_2026.csv,total_listed_insects,Count of EPBC-listed insect taxa associated with that state in the DCCEEW extract
+city_melbourne_insect_diversity_by_order_1875_2015.csv,species,"Documented species richness in City of Melbourne LGA, Table 3.1"
+city_melbourne_species_by_source_and_order_1875_2015.csv,ala_species_1875_2014,Species documented by Atlas of Living Australia source for that order
+city_melbourne_species_by_source_and_order_1875_2015.csv,melbourne_bioblitz_species_2014,Species documented by the 2014 Melbourne BioBlitz for that order
+city_melbourne_species_by_source_and_order_1875_2015.csv,targeted_survey_species_2014_2015,Species retained from targeted survey for source-comparison table
+city_melbourne_habitat_richness_2014_2015.csv,unique_species,Species occurring only in that habitat among the four habitat types in Figure 5.2

@@ -1,0 +1,17 @@
+﻿common_group,order,species,genera,families,geography,coverage_period,source_table
+Beetles,Coleoptera,605,360,42,City of Melbourne LGA,1875-2015,Table 3.1
+Butterflies and moths,Lepidoptera,245,170,33,City of Melbourne LGA,1875-2015,Table 3.1
+"Wasps, bees and ants",Hymenoptera,198,83,30,City of Melbourne LGA,1875-2015,Table 3.1
+True bugs,Hemiptera,118,93,33,City of Melbourne LGA,1875-2015,Table 3.1
+"Flies, mosquitoes and midges",Diptera,105,63,41,City of Melbourne LGA,1875-2015,Table 3.1
+Lacewings,Neuroptera,23,19,6,City of Melbourne LGA,1875-2015,Table 3.1
+Dragonflies and damselflies,Odonata,15,11,8,City of Melbourne LGA,1875-2015,Table 3.1
+Cockroaches and termites,Blattodea,13,9,5,City of Melbourne LGA,1875-2015,Table 3.1
+Caddisflies,Trichoptera,7,7,4,City of Melbourne LGA,1875-2015,Table 3.1
+Mantis,Mantodea,5,3,1,City of Melbourne LGA,1875-2015,Table 3.1
+Grasshoppers and crickets,Orthoptera,4,3,2,City of Melbourne LGA,1875-2015,Table 3.1
+Thrips,Thysanoptera,4,4,2,City of Melbourne LGA,1875-2015,Table 3.1
+Mayflies,Ephemeroptera,3,3,3,City of Melbourne LGA,1875-2015,Table 3.1
+Bark lice,Psocoptera,3,3,2,City of Melbourne LGA,1875-2015,Table 3.1
+Earwigs,Dermaptera,2,2,2,City of Melbourne LGA,1875-2015,Table 3.1
+Fleas,Siphonaptera,1,1,1,City of Melbourne LGA,1875-2015,Table 3.1
