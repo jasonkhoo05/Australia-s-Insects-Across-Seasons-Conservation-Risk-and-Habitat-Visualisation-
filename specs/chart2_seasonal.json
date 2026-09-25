@@ -1,0 +1,220 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+
+  "description": "Circular seasonal chart showing butterfly species with newly documented out-of-season records by month.",
+
+  "background": "#FFFFFF",
+
+  "data": {
+    "url": "data/inaturalist_out_of_season_month_summary_2026.csv",
+    "format": {
+      "type": "csv"
+    }
+  },
+
+  "transform": [
+    {
+      "calculate": "toNumber(datum.month_number)",
+      "as": "month_num"
+    },
+    {
+      "calculate": "toNumber(datum.species_with_new_out_of_season_record)",
+      "as": "record_count"
+    },
+    {
+      "calculate": "(datum.month_num - 1) / 12",
+      "as": "month_start"
+    },
+    {
+      "calculate": "datum.month_num / 12",
+      "as": "month_end"
+    },
+    {
+      "calculate": "(datum.month_num - 0.5) / 12",
+      "as": "month_middle"
+    }
+  ],
+
+  "width": 660,
+  "height": 560,
+
+  "title": {
+    "text": "Seasonal discoveries peak from May to August",
+
+    "subtitle": [
+      "Each segment shows the number of butterfly species with",
+      "newly documented out-of-season records in that month."
+    ],
+
+    "anchor": "start",
+
+    "font": "Source Serif 4",
+    "fontSize": 22,
+    "fontWeight": "bold",
+    "color": "#1F1F1F",
+
+    "subtitleFont": "Source Sans 3",
+    "subtitleFontSize": 14,
+    "subtitleFontWeight": "normal",
+    "subtitleColor": "#666666",
+
+    "subtitleLineHeight": 20,
+    "subtitlePadding": 8,
+
+    "offset": 25
+  },
+
+  "layer": [
+    {
+      "mark": {
+        "type": "arc",
+        "innerRadius": 70,
+        "padAngle": 0.025,
+        "cornerRadius": 4,
+        "stroke": "#FFFFFF",
+        "strokeWidth": 1
+      },
+
+      "encoding": {
+        "theta": {
+          "field": "month_start",
+          "type": "quantitative",
+          "scale": {
+            "domain": [0, 1],
+            "range": [
+              0,
+              6.283185307179586
+            ]
+          }
+        },
+
+        "theta2": {
+          "field": "month_end"
+        },
+
+        "radius": {
+          "field": "record_count",
+          "type": "quantitative",
+          "scale": {
+            "type": "sqrt",
+            "zero": true,
+            "range": [
+              80,
+              205
+            ]
+          }
+        },
+
+        "color": {
+          "field": "record_count",
+          "type": "quantitative",
+          "scale": {
+            "range": [
+              "#D7EEE9",
+              "#178F83"
+            ]
+          },
+          "legend": null
+        },
+
+        "tooltip": [
+          {
+            "field": "month",
+            "type": "nominal",
+            "title": "Month"
+          },
+          {
+            "field": "record_count",
+            "type": "quantitative",
+            "title": "Species with new seasonal records",
+            "format": ","
+          }
+        ]
+      }
+    },
+
+    {
+      "mark": {
+        "type": "text",
+        "font": "Source Sans 3",
+        "fontSize": 13,
+        "fontWeight": 700,
+        "color": "#252525",
+        "radiusOffset": 11
+      },
+
+      "encoding": {
+        "theta": {
+          "field": "month_middle",
+          "type": "quantitative",
+          "scale": {
+            "domain": [0, 1],
+            "range": [
+              0,
+              6.283185307179586
+            ]
+          }
+        },
+
+        "radius": {
+          "field": "record_count",
+          "type": "quantitative",
+          "scale": {
+            "type": "sqrt",
+            "zero": true,
+            "range": [
+              80,
+              205
+            ]
+          }
+        },
+
+        "text": {
+          "field": "record_count",
+          "type": "quantitative",
+          "format": ","
+        }
+      }
+    },
+
+    {
+      "mark": {
+        "type": "text",
+        "radius": 248,
+        "font": "Source Sans 3",
+        "fontSize": 14,
+        "fontWeight": 600,
+        "color": "#444444"
+      },
+
+      "encoding": {
+        "theta": {
+          "field": "month_middle",
+          "type": "quantitative",
+          "scale": {
+            "domain": [0, 1],
+            "range": [
+              0,
+              6.283185307179586
+            ]
+          }
+        },
+
+        "text": {
+          "field": "month",
+          "type": "nominal"
+        }
+      }
+    }
+  ],
+
+  "config": {
+    "view": {
+      "stroke": null
+    },
+
+    "axis": {
+      "grid": false
+    }
+  }
+}

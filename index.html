@@ -11,8 +11,15 @@
 
     <title>Hidden in Plain Sight | Australia's Insects</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <!-- =====================================================
+         GOOGLE FONTS
+    ====================================================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
     <link
         rel="preconnect"
@@ -25,35 +32,49 @@
         rel="stylesheet"
     >
 
-    <!-- Our CSS -->
+
+    <!-- =====================================================
+         OUR CSS
+    ====================================================== -->
+
     <link
         rel="stylesheet"
         href="css/style.css"
     >
 
-    <!-- Vega -->
+
+    <!-- =====================================================
+         VEGA
+    ====================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
 
-    <!-- Vega-Lite -->
+
+    <!-- =====================================================
+         VEGA-LITE
+    ====================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
 
-    <!-- Vega Embed -->
+
+    <!-- =====================================================
+         VEGA EMBED
+    ====================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
 </head>
+
 
 <body>
 
     <main class="page-container">
+
 
         <!-- =====================================================
              INTRODUCTION
         ====================================================== -->
 
         <header class="hero">
-
-            <!-- <p class="section-label">
-                AUSTRALIAN INSECT DIVERSITY
-            </p> -->
 
             <h1>
                 Hidden in Plain Sight
@@ -68,7 +89,7 @@
 
 
         <!-- =====================================================
-             CHART 1
+             SECTION 1 — CITIZEN SCIENCE
         ====================================================== -->
 
         <section class="visualisation-section">
@@ -100,6 +121,10 @@
             </div>
 
 
+            <!-- =================================================
+                 CHART 1
+            ================================================== -->
+
             <div class="chart-container">
 
                 <div id="chart1"></div>
@@ -108,10 +133,53 @@
 
         </section>
 
+
+        <!-- =====================================================
+             CHART 2 — SEASONAL RECORDS
+        ====================================================== -->
+
+        <section class="visualisation-section">
+
+            <div class="story-text">
+
+                <p class="section-number">
+                    02 — SEASONAL DISCOVERY
+                </p>
+
+                <h2>
+                    New seasonal records cluster in particular
+                    parts of the year
+                </h2>
+
+                <p>
+                    Citizen-science observations are not only adding
+                    more butterfly records. They are also documenting
+                    some species during months outside their previously
+                    recorded seasonal windows.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 CHART 2
+            ================================================== -->
+
+            <div class="chart-container">
+
+                <div id="chart2"></div>
+
+            </div>
+
+        </section>
+
     </main>
 
 
-    <!-- Our JavaScript -->
+    <!-- =========================================================
+         OUR JAVASCRIPT
+    ========================================================== -->
+
     <script src="js/visualisation.js"></script>
 
 </body>
