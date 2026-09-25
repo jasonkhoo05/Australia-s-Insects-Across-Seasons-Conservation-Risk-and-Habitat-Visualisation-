@@ -1,0 +1,209 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+
+  "description": "Butterfly species represented in Australian iNaturalist records compared with the Australian butterfly baseline.",
+
+  "background": "#FFFFFF",
+
+  "data": {
+    "url": "data/inaturalist_butterfly_study_summary_2026.csv",
+    "format": {
+      "type": "csv"
+    }
+  },
+
+  "transform": [
+    {
+      "filter": "datum.metric === 'observed_species' || datum.metric === 'baseline_australian_species'"
+    },
+
+    {
+      "calculate": "toNumber(datum.value)",
+      "as": "numeric_value"
+    },
+
+    {
+      "pivot": "metric",
+      "value": "numeric_value",
+      "op": "max"
+    },
+
+    {
+      "calculate": "sequence(1, datum.baseline_australian_species + 1)",
+      "as": "species_units"
+    },
+
+    {
+      "flatten": ["species_units"],
+      "as": ["species_unit"]
+    },
+
+    {
+      "calculate": "(datum.species_unit - 1) % 22",
+      "as": "column"
+    },
+
+    {
+      "calculate": "floor((datum.species_unit - 1) / 22)",
+      "as": "row"
+    },
+
+    {
+      "calculate": "datum.column + 0.82",
+      "as": "column_end"
+    },
+
+    {
+      "calculate": "datum.row + 0.82",
+      "as": "row_end"
+    },
+
+    {
+      "calculate": "datum.species_unit <= datum.observed_species ? 'Observed' : 'Not observed'",
+      "as": "record_status"
+    },
+
+    {
+      "calculate": "format(datum.observed_species / datum.baseline_australian_species, '.1%')",
+      "as": "percentage_label"
+    },
+
+    {
+      "calculate": "datum.observed_species + ' of ' + datum.baseline_australian_species + ' species'",
+      "as": "species_label"
+    }
+  ],
+
+  "vconcat": [
+    {
+      "width": 660,
+      "height": 390,
+
+      "title": {
+        "text": "How much butterfly diversity has citizen science captured?",
+        "subtitle": "Each square represents one species in the Australian butterfly baseline",
+        "anchor": "start",
+        "font": "Source Serif 4",
+        "fontSize": 22,
+        "fontWeight": "bold",
+        "subtitleFont": "Source Sans 3",
+        "subtitleFontSize": 14,
+        "subtitleColor": "#666666",
+        "subtitlePadding": 7,
+        "offset": 15
+      },
+
+      "mark": {
+        "type": "rect",
+        "cornerRadius": 2
+      },
+
+      "encoding": {
+
+        "x": {
+          "field": "column",
+          "type": "quantitative",
+          "axis": null,
+          "scale": {
+            "domain": [0, 22]
+          }
+        },
+
+        "x2": {
+          "field": "column_end"
+        },
+
+        "y": {
+          "field": "row",
+          "type": "quantitative",
+          "axis": null,
+          "scale": {
+            "reverse": true
+          }
+        },
+
+        "y2": {
+          "field": "row_end"
+        },
+
+        "color": {
+          "field": "record_status",
+          "type": "nominal",
+
+          "scale": {
+            "domain": [
+              "Observed",
+              "Not observed"
+            ],
+
+            "range": [
+              "#178F83",
+              "#D9E2E0"
+            ]
+          },
+
+          "legend": {
+            "title": null,
+            "orient": "bottom",
+            "direction": "horizontal",
+            "columns": 2,
+            "columnPadding": 24,
+            "labelFont": "Source Sans 3",
+            "labelFontSize": 13,
+            "symbolType": "square",
+            "symbolSize": 120,
+            "offset": 15
+          }
+        },
+
+        "tooltip": [
+
+          {
+            "field": "record_status",
+            "type": "nominal",
+            "title": "Status"
+          },
+
+          {
+            "field": "observed_species",
+            "type": "quantitative",
+            "title": "Species observed",
+            "format": ","
+          },
+
+          {
+            "field": "baseline_australian_species",
+            "type": "quantitative",
+            "title": "Australian baseline",
+            "format": ","
+          },
+
+          {
+            "field": "percentage_label",
+            "type": "nominal",
+            "title": "Baseline observed"
+          }
+
+        ]
+      }
+    }
+
+  ],
+
+  "spacing": 5,
+
+  "config": {
+
+    "view": {
+      "stroke": null
+    },
+
+    "axis": {
+      "grid": false
+    },
+
+    "concat": {
+      "spacing": 5
+    }
+  }
+}

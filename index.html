@@ -1,12 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Document</title>
-      <link rel="stylesheet" href="css/style.css">
-  </head>
-  <body>
-      
-  </body>
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Hidden in Plain Sight | Australia's Insects</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Our CSS -->
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+    <!-- Vega -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+
+    <!-- Vega-Lite -->
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+
+    <!-- Vega Embed -->
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+
+<body>
+
+    <main class="page-container">
+
+        <!-- =====================================================
+             INTRODUCTION
+        ====================================================== -->
+
+        <header class="hero">
+
+            <!-- <p class="section-label">
+                AUSTRALIAN INSECT DIVERSITY
+            </p> -->
+
+            <h1>
+                Hidden in Plain Sight
+            </h1>
+
+            <p class="hero-subtitle">
+                Australia's insects across seasons, conservation
+                risk and habitat
+            </p>
+
+        </header>
+
+
+        <!-- =====================================================
+             CHART 1
+        ====================================================== -->
+
+        <section class="visualisation-section">
+
+            <div class="story-text">
+
+                <p class="section-number">
+                    01 — CITIZEN SCIENCE
+                </p>
+
+                <h2>
+                    Citizen science is revealing much of Australia's
+                    butterfly diversity
+                </h2>
+
+                <p>
+                    Butterfly observations contributed by the public
+                    provide a broad picture of the species that have
+                    been documented across Australia.
+                </p>
+
+                <p>
+                    The chart below compares the number of butterfly
+                    species represented in the iNaturalist dataset
+                    with the Australian butterfly baseline used in
+                    the study.
+                </p>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <div id="chart1"></div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Our JavaScript -->
+    <script src="js/visualisation.js"></script>
+
+</body>
+
 </html>
