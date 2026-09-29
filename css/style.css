@@ -106,7 +106,8 @@ body {
 
 
 .story-text {
-    max-width: 720px;
+    width: 100%;
+    max-width: none;
 
     margin-bottom: 35px;
 }
@@ -126,7 +127,8 @@ body {
 
 
 .story-text h2 {
-    max-width: 780px;
+    width: 100%;
+    max-width: none;
 
     margin-top: 0;
 
@@ -143,7 +145,8 @@ body {
 
 
 .story-text p {
-    max-width: 680px;
+    width: 100%;
+    max-width: none;
 
     margin-top: 0;
 

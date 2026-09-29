@@ -1,7 +1,7 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
 
-  "description": "Butterfly species represented in Australian iNaturalist records compared with the Australian butterfly baseline.",
+  "description": "Butterfly species represented in Australian iNaturalist records compared with the Australian butterfly baseline, with key citizen-science statistics.",
 
   "background": "#FFFFFF",
 
@@ -14,7 +14,7 @@
 
   "transform": [
     {
-      "filter": "datum.metric === 'observed_species' || datum.metric === 'baseline_australian_species'"
+      "filter": "datum.metric === 'observations' || datum.metric === 'contributors_approx' || datum.metric === 'observed_species' || datum.metric === 'baseline_australian_species'"
     },
 
     {
@@ -69,29 +69,45 @@
     },
 
     {
-      "calculate": "datum.observed_species + ' of ' + datum.baseline_australian_species + ' species'",
-      "as": "species_label"
+      "calculate": "format(datum.observations, ',')",
+      "as": "observations_label"
+    },
+
+    {
+      "calculate": "format(datum.contributors_approx, ',')",
+      "as": "contributors_label"
+    },
+
+    {
+      "calculate": "format(datum.observed_species, ',')",
+      "as": "observed_species_label"
+    },
+
+    {
+      "calculate": "format(datum.baseline_australian_species, ',')",
+      "as": "baseline_species_label"
     }
   ],
 
-  "vconcat": [
+  "title": {
+    "text": "How much butterfly diversity has citizen science captured?",
+    "subtitle": "Each square represents one species in the Australian butterfly baseline",
+    "anchor": "start",
+    "font": "Source Serif 4",
+    "fontSize": 22,
+    "fontWeight": "bold",
+    "subtitleFont": "Source Sans 3",
+    "subtitleFontSize": 14,
+    "subtitleColor": "#666666",
+    "subtitlePadding": 7,
+    "offset": 15
+  },
+
+  "hconcat": [
+
     {
       "width": 660,
       "height": 390,
-
-      "title": {
-        "text": "How much butterfly diversity has citizen science captured?",
-        "subtitle": "Each square represents one species in the Australian butterfly baseline",
-        "anchor": "start",
-        "font": "Source Serif 4",
-        "fontSize": 22,
-        "fontWeight": "bold",
-        "subtitleFont": "Source Sans 3",
-        "subtitleFontSize": 14,
-        "subtitleColor": "#666666",
-        "subtitlePadding": 7,
-        "offset": 15
-      },
 
       "mark": {
         "type": "rect",
@@ -165,9 +181,23 @@
           },
 
           {
+            "field": "observations",
+            "type": "quantitative",
+            "title": "Butterfly observations",
+            "format": ","
+          },
+
+          {
+            "field": "contributors_approx",
+            "type": "quantitative",
+            "title": "Contributors",
+            "format": ","
+          },
+
+          {
             "field": "observed_species",
             "type": "quantitative",
-            "title": "Species observed",
+            "title": "Observed species",
             "format": ","
           },
 
@@ -181,16 +211,408 @@
           {
             "field": "percentage_label",
             "type": "nominal",
-            "title": "Baseline observed"
+            "title": "Baseline represented"
           }
 
         ]
       }
+    },
+
+    {
+      "width": 260,
+      "height": 390,
+
+      "transform": [
+        {
+          "filter": "datum.species_unit === 1"
+        }
+      ],
+
+      "layer": [
+
+        {
+          "mark": {
+            "type": "rule",
+            "color": "#D8D8D8",
+            "strokeWidth": 1
+          },
+
+          "encoding": {
+            "x": {
+              "value": 0
+            },
+
+            "y": {
+              "value": 0
+            },
+
+            "y2": {
+              "value": 390
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Serif 4",
+            "fontSize": 24,
+            "fontWeight": "bold",
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 28
+            },
+
+            "y": {
+              "value": 10
+            },
+
+            "text": {
+              "value": "Key numbers"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 17,
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 28
+            },
+
+            "y": {
+              "value": 68
+            },
+
+            "text": {
+              "value": "•"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 15,
+            "color": "#4A4A4A"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 65
+            },
+
+            "text": {
+              "value": "Total butterfly observations:"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Serif 4",
+            "fontSize": 26,
+            "fontWeight": "bold",
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 88
+            },
+
+            "text": {
+              "field": "observations_label"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 17,
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 28
+            },
+
+            "y": {
+              "value": 145
+            },
+
+            "text": {
+              "value": "•"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 15,
+            "color": "#4A4A4A"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 142
+            },
+
+            "text": {
+              "value": "Total contributors:"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Serif 4",
+            "fontSize": 26,
+            "fontWeight": "bold",
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 165
+            },
+
+            "text": {
+              "field": "contributors_label"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 17,
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 28
+            },
+
+            "y": {
+              "value": 222
+            },
+
+            "text": {
+              "value": "•"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 15,
+            "color": "#4A4A4A"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 219
+            },
+
+            "text": {
+              "value": "Observed species:"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Serif 4",
+            "fontSize": 26,
+            "fontWeight": "bold",
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 242
+            },
+
+            "text": {
+              "field": "observed_species_label"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 17,
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 28
+            },
+
+            "y": {
+              "value": 299
+            },
+
+            "text": {
+              "value": "•"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 15,
+            "color": "#4A4A4A"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 296
+            },
+
+            "text": {
+              "value": "Australian butterfly species"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Sans 3",
+            "fontSize": 15,
+            "color": "#4A4A4A"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 317
+            },
+
+            "text": {
+              "value": "(baseline):"
+            }
+          }
+        },
+
+        {
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "top",
+            "font": "Source Serif 4",
+            "fontSize": 26,
+            "fontWeight": "bold",
+            "color": "#252525"
+          },
+
+          "encoding": {
+            "x": {
+              "value": 50
+            },
+
+            "y": {
+              "value": 340
+            },
+
+            "text": {
+              "field": "baseline_species_label"
+            }
+          }
+        }
+
+      ]
     }
 
   ],
 
-  "spacing": 5,
+  "spacing": 28,
 
   "config": {
 
@@ -203,7 +625,7 @@
     },
 
     "concat": {
-      "spacing": 5
+      "spacing": 28
     }
   }
 }
