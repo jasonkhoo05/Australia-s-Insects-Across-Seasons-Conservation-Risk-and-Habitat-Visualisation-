@@ -1,0 +1,293 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+
+  "description": "Heatmap showing newly documented seasonal months for butterfly species with the widest documented seasonal additions.",
+
+  "background": "#FFFFFF",
+
+  "data": {
+    "url": "data/inaturalist_out_of_season_species_2026.csv",
+    "format": {
+      "type": "csv"
+    }
+  },
+
+  "transform": [
+    {
+      "calculate": "toNumber(datum.NewMonthCount)",
+      "as": "new_month_count"
+    },
+
+    {
+      "window": [
+        {
+          "op": "row_number",
+          "as": "species_rank"
+        }
+      ],
+
+      "sort": [
+        {
+          "field": "new_month_count",
+          "order": "descending"
+        },
+        {
+          "field": "CommonName",
+          "order": "ascending"
+        }
+      ]
+    },
+
+    {
+      "filter": "datum.species_rank <= 10"
+    },
+
+    {
+      "calculate": "split(datum.NewMonths, ', ')",
+      "as": "new_months_array"
+    },
+
+    {
+      "flatten": [
+        "new_months_array"
+      ],
+
+      "as": [
+        "month"
+      ]
+    },
+
+    {
+      "calculate": "1",
+      "as": "new_record"
+    },
+
+    {
+      "impute": "new_record",
+
+      "key": "month",
+
+      "groupby": [
+        "ScientificName",
+        "CommonName",
+        "NewMonths",
+        "new_month_count",
+        "species_rank"
+      ],
+
+      "keyvals": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+
+      "value": 0
+    },
+
+    {
+      "calculate": "datum.new_record == 1 ? 'Newly documented month' : 'No new record'",
+      "as": "record_status"
+    }
+  ],
+
+  "width": 300,
+  "height": 305,
+
+  "title": {
+    "text": "The pattern is not the same for every species",
+
+    "subtitle": [
+      "Newly documented months for species with the",
+      "widest additions to their recorded seasonal window"
+    ],
+
+    "anchor": "start",
+
+    "font": "Source Serif 4",
+    "fontSize": 20,
+    "fontWeight": "bold",
+    "color": "#1F1F1F",
+
+    "subtitleFont": "Source Sans 3",
+    "subtitleFontSize": 13,
+    "subtitleFontWeight": "normal",
+    "subtitleColor": "#666666",
+
+    "subtitleLineHeight": 18,
+    "subtitlePadding": 7,
+
+    "offset": 22
+  },
+
+  "mark": {
+    "type": "rect",
+
+    "stroke": "#FFFFFF",
+    "strokeWidth": 1.4,
+
+    "cornerRadius": 1
+  },
+
+  "encoding": {
+    "x": {
+      "field": "month",
+      "type": "ordinal",
+
+      "sort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ],
+
+      "axis": {
+        "title": null,
+
+        "orient": "top",
+
+        "labelFont": "Source Sans 3",
+        "labelFontSize": 10.5,
+        "labelFontWeight": 600,
+        "labelColor": "#444444",
+
+        "labelAngle": 0,
+        "labelPadding": 8,
+
+        "ticks": false,
+        "domain": false
+      }
+    },
+
+    "y": {
+      "field": "CommonName",
+      "type": "nominal",
+
+      "sort": {
+        "field": "species_rank",
+        "op": "min",
+        "order": "ascending"
+      },
+
+      "axis": {
+        "title": null,
+
+        "labelFont": "Source Sans 3",
+        "labelFontSize": 10.5,
+        "labelFontWeight": 500,
+        "labelColor": "#444444",
+
+        "labelPadding": 8,
+        "labelLimit": 145,
+
+        "ticks": false,
+        "domain": false
+      }
+    },
+
+    "color": {
+      "field": "record_status",
+      "type": "nominal",
+
+      "scale": {
+        "domain": [
+          "Newly documented month",
+          "No new record"
+        ],
+
+        "range": [
+          "#27988D",
+          "#EBEEEC"
+        ]
+      },
+
+      "legend": {
+        "title": null,
+
+        "orient": "bottom",
+        "direction": "horizontal",
+        "columns": 2,
+
+        "offset": 18,
+
+        "labelFont": "Source Sans 3",
+        "labelFontSize": 11,
+        "labelColor": "#555555",
+
+        "symbolType": "square",
+        "symbolSize": 190,
+
+        "columnPadding": 18
+      }
+    },
+
+    "tooltip": [
+      {
+        "field": "CommonName",
+        "type": "nominal",
+        "title": "Butterfly"
+      },
+
+      {
+        "field": "ScientificName",
+        "type": "nominal",
+        "title": "Scientific name"
+      },
+
+      {
+        "field": "month",
+        "type": "nominal",
+        "title": "Month"
+      },
+
+      {
+        "field": "record_status",
+        "type": "nominal",
+        "title": "Status"
+      },
+
+      {
+        "field": "new_month_count",
+        "type": "quantitative",
+        "title": "New months",
+        "format": ".0f"
+      },
+
+      {
+        "field": "NewMonths",
+        "type": "nominal",
+        "title": "All newly documented months"
+      }
+    ]
+  },
+
+  "config": {
+    "view": {
+      "stroke": null
+    },
+
+    "axis": {
+      "grid": false
+    },
+
+    "legend": {
+      "padding": 0
+    }
+  }
+}

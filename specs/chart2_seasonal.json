@@ -35,8 +35,8 @@
     }
   ],
 
-  "width": 660,
-  "height": 560,
+  "width": 430,
+  "height": 520,
 
   "title": {
     "text": "Seasonal discoveries peak from May to August",
@@ -68,7 +68,7 @@
     {
       "mark": {
         "type": "arc",
-        "innerRadius": 70,
+        "innerRadius": 58,
         "padAngle": 0.025,
         "cornerRadius": 4,
         "stroke": "#FFFFFF",
@@ -99,8 +99,8 @@
             "type": "sqrt",
             "zero": true,
             "range": [
-              80,
-              205
+              68,
+              170
             ]
           }
         },
@@ -180,7 +180,7 @@
     {
       "mark": {
         "type": "text",
-        "radius": 248,
+        "radius": 202,
         "font": "Source Sans 3",
         "fontSize": 14,
         "fontWeight": 600,

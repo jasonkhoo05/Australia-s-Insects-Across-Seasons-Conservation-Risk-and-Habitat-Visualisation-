@@ -34,3 +34,22 @@ vegaEmbed(
 .catch(function (error) {
     console.error("Error loading Chart 2:", error);
 });
+
+
+// ============================================================
+// Chart 3 — Species × month seasonal-record heatmap
+// ============================================================
+
+vegaEmbed(
+    "#chart3",
+    "specs/chart3_heatmap.json",
+    {
+        actions: false
+    }
+)
+.then(function () {
+    console.log("Chart 3 loaded successfully.");
+})
+.catch(function (error) {
+    console.error("Error loading Chart 3:", error);
+});

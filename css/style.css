@@ -194,6 +194,52 @@ body {
     width: 100%;
 }
 
+/* ============================================================
+   SHARED VISUAL WIDTH
+   Chart 1 and the Chart 2 + Chart 3 row use the same width.
+============================================================ */
+
+.story-text,
+.seasonal-chart-row {
+    width: 100%;
+    max-width: 1004px;
+}
+
+
+/* ============================================================
+   CHARTS 2 + 3 ROW
+============================================================ */
+
+.seasonal-chart-row {
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    gap: 24px;
+
+    align-items: stretch;
+}
+
+
+/* ============================================================
+   CHARTS 2 + 3 CONTAINERS
+============================================================ */
+
+.seasonal-chart-container {
+    width: 100%;
+
+    margin-top: 30px;
+
+    padding: 24px;
+
+    overflow: hidden;
+}
+
+
+#chart2,
+#chart3 {
+    width: 100%;
+}
 
 /* ============================================================
    RESPONSIVE DESIGN
@@ -232,6 +278,17 @@ body {
 
     .chart-container {
         padding: 15px;
+
+        overflow-x: auto;
+    }
+
+    .seasonal-chart-row {
+    grid-template-columns: 1fr;
+    }
+
+
+    .seasonal-chart-container {
+        width: 100%;
 
         overflow-x: auto;
     }
