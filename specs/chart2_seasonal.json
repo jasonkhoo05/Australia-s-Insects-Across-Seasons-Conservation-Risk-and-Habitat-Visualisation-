@@ -36,7 +36,7 @@
   ],
 
   "width": 430,
-  "height": 520,
+  "height": 430,
 
   "title": {
     "text": "Seasonal discoveries peak from May to August",
@@ -49,19 +49,19 @@
     "anchor": "start",
 
     "font": "Source Serif 4",
-    "fontSize": 22,
+    "fontSize": 20,
     "fontWeight": "bold",
     "color": "#1F1F1F",
 
     "subtitleFont": "Source Sans 3",
-    "subtitleFontSize": 14,
+    "subtitleFontSize": 13,
     "subtitleFontWeight": "normal",
     "subtitleColor": "#666666",
 
-    "subtitleLineHeight": 20,
-    "subtitlePadding": 8,
+    "subtitleLineHeight": 18,
+    "subtitlePadding": 7,
 
-    "offset": 25
+    "offset": 22
   },
 
   "layer": [
@@ -79,8 +79,13 @@
         "theta": {
           "field": "month_start",
           "type": "quantitative",
+
           "scale": {
-            "domain": [0, 1],
+            "domain": [
+              0,
+              1
+            ],
+
             "range": [
               0,
               6.283185307179586
@@ -95,9 +100,11 @@
         "radius": {
           "field": "record_count",
           "type": "quantitative",
+
           "scale": {
             "type": "sqrt",
             "zero": true,
+
             "range": [
               68,
               170
@@ -108,12 +115,14 @@
         "color": {
           "field": "record_count",
           "type": "quantitative",
+
           "scale": {
             "range": [
               "#D7EEE9",
               "#178F83"
             ]
           },
+
           "legend": null
         },
 
@@ -123,6 +132,7 @@
             "type": "nominal",
             "title": "Month"
           },
+
           {
             "field": "record_count",
             "type": "quantitative",
@@ -136,19 +146,27 @@
     {
       "mark": {
         "type": "text",
+
         "font": "Source Sans 3",
         "fontSize": 13,
         "fontWeight": 700,
+
         "color": "#252525",
-        "radiusOffset": 11
+
+        "radiusOffset": 10
       },
 
       "encoding": {
         "theta": {
           "field": "month_middle",
           "type": "quantitative",
+
           "scale": {
-            "domain": [0, 1],
+            "domain": [
+              0,
+              1
+            ],
+
             "range": [
               0,
               6.283185307179586
@@ -159,12 +177,14 @@
         "radius": {
           "field": "record_count",
           "type": "quantitative",
+
           "scale": {
             "type": "sqrt",
             "zero": true,
+
             "range": [
-              80,
-              205
+              78,
+              185
             ]
           }
         },
@@ -180,10 +200,13 @@
     {
       "mark": {
         "type": "text",
+
         "radius": 202,
+
         "font": "Source Sans 3",
         "fontSize": 14,
         "fontWeight": 600,
+
         "color": "#444444"
       },
 
@@ -191,8 +214,13 @@
         "theta": {
           "field": "month_middle",
           "type": "quantitative",
+
           "scale": {
-            "domain": [0, 1],
+            "domain": [
+              0,
+              1
+            ],
+
             "range": [
               0,
               6.283185307179586

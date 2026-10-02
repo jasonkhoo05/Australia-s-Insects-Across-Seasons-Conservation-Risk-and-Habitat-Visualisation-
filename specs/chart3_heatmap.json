@@ -31,6 +31,7 @@
           "field": "new_month_count",
           "order": "descending"
         },
+
         {
           "field": "CommonName",
           "order": "ascending"
@@ -39,7 +40,7 @@
     },
 
     {
-      "filter": "datum.species_rank <= 10"
+      "filter": "datum.species_rank <= 18"
     },
 
     {
@@ -100,7 +101,7 @@
   ],
 
   "width": 300,
-  "height": 305,
+  "height": 400,
 
   "title": {
     "text": "The pattern is not the same for every species",
@@ -132,7 +133,7 @@
     "type": "rect",
 
     "stroke": "#FFFFFF",
-    "strokeWidth": 1.4,
+    "strokeWidth": 1.3,
 
     "cornerRadius": 1
   },
@@ -168,7 +169,7 @@
         "labelColor": "#444444",
 
         "labelAngle": 0,
-        "labelPadding": 8,
+        "labelPadding": 7,
 
         "ticks": false,
         "domain": false
@@ -193,7 +194,7 @@
         "labelFontWeight": 500,
         "labelColor": "#444444",
 
-        "labelPadding": 8,
+        "labelPadding": 7,
         "labelLimit": 145,
 
         "ticks": false,
@@ -224,16 +225,16 @@
         "direction": "horizontal",
         "columns": 2,
 
-        "offset": 18,
+        "offset": 12,
 
         "labelFont": "Source Sans 3",
-        "labelFontSize": 11,
+        "labelFontSize": 10,
         "labelColor": "#555555",
 
         "symbolType": "square",
-        "symbolSize": 190,
+        "symbolSize": 150,
 
-        "columnPadding": 18
+        "columnPadding": 14
       }
     },
 
