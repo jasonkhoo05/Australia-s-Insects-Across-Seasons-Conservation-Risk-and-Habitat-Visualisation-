@@ -149,6 +149,73 @@
 
         </section>
 
+        <!-- Chart 5 follows Chart 4 and shares its full-width layout. -->
+        <section class="visualisation-section">
+
+            <div class="story-text">
+                <p class="section-number">03 — CONSERVATION RISK</p>
+
+                <h2>What does Australia's threatened-insect list contain?</h2>
+
+                <p>
+                    Seasonal records help reveal when insects are active.
+                    Conservation listings answer a different question: which
+                    insects are formally recognised as threatened nationally?
+                </p>
+
+                <p>
+                    This treemap groups the insects in the government extract
+                    by order, a scientific grouping of related insects. Within
+                    each group, colour separates the national threat categories.
+                    Larger coloured rectangles contain more listed taxa.
+                </p>
+            </div>
+
+            <div class="chart-container chart5-container">
+
+                <div class="chart-heading">
+                    <h3>Conservation risk across insect groups</h3>
+
+                    <p>
+                        Each labelled group is an insect order. Lepidoptera
+                        includes butterflies and moths; Coleoptera means beetles;
+                        Hymenoptera includes bees, wasps and ants. Hover over a
+                        coloured rectangle for its full threat category and count.
+                        Rectangle labels show counts, with status codes where space allows.
+                        CR = Critically Endangered; EN = Endangered;
+                        VU = Vulnerable.
+                    </p>
+                </div>
+
+                <div
+                    id="chart5"
+                    aria-label="Treemap of nationally listed insect taxa by order and threat category"
+                ></div>
+
+                <p class="chart-note">
+                    A taxon is a listed species or subspecies. Counts describe
+                    the national EPBC Act list in this extract, not insect
+                    abundance or the proportion of all insects that are threatened.
+                    An unrepresented group does not necessarily have no species at risk.
+                </p>
+
+            </div>
+
+            <p class="source-note">
+                Conservation data:
+
+                <a
+                    href="https://data.gov.au/data/dataset/ae652011-f39e-4c6c-91b8-1dc2d2dfee8f"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >DCCEEW — EPBC Act Threatened Species State Lists</a>.
+
+                The source date is shown above the treemap. Insect order is
+                derived from the family classification in the supplied dataset.
+            </p>
+
+        </section>
+
     </main>
 
     <script src="js/visualisation.js"></script>

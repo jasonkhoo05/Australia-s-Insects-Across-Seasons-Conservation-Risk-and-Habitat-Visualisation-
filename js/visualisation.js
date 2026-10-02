@@ -51,8 +51,23 @@ async function mountChart(id, path) {
         lastWidth = width;
 
         const spec = structuredClone(original);
+        const isVega = spec.$schema?.includes("/vega/");
 
-        if (id !== "chart1") {
+        if (isVega) {
+            spec.width = width;
+
+            const heightScale = id === "chart5" ? 2 : 1;
+
+            spec.height = Math.round(
+                (width < 560 ? 580 : 430) * heightScale
+            );
+
+            spec.autosize = {
+                type: "fit-x",
+                contains: "padding",
+                resize: true
+            };
+        } else if (id !== "chart1") {
             spec.width = width;
 
             spec.autosize = {
@@ -123,7 +138,8 @@ async function mountChart(id, path) {
 
         const result = await vegaEmbed(element, spec, {
             actions: false,
-            renderer: "svg"
+            renderer: "svg",
+            mode: isVega ? "vega" : "vega-lite"
         });
 
         currentView = result.view;
@@ -151,7 +167,8 @@ async function initialiseCharts() {
         ["chart1", "specs/chart1_waffle.json"],
         ["chart2", "specs/chart2_seasonal.json"],
         ["chart3", "specs/chart3_heatmap.json"],
-        ["chart4", "specs/chart4_month_distribution.json"]
+        ["chart4", "specs/chart4_month_distribution.json"],
+        ["chart5", "specs/chart5_conservation_treemap.json"]
     ];
 
     await Promise.all(

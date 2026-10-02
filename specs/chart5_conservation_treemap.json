@@ -1,0 +1,353 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Treemap of EPBC-listed insect taxa by order and threat status. All counts and source dates are derived from the supplied DCCEEW CSV.",
+  "width": 956,
+  "height": 430,
+  "padding": {
+    "left": 0,
+    "right": 0,
+    "top": 0,
+    "bottom": 5
+  },
+  "autosize": {
+    "type": "fit-x",
+    "contains": "padding",
+    "resize": true
+  },
+  "background": "#FFFFFF",
+  "data": [
+    {
+      "name": "taxa",
+      "url": "data/dcceew_threatened_insects_with_order_2026.csv",
+      "format": {
+        "type": "csv"
+      },
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum.scientific_name) && isValid(datum.order_derived_from_family) && isValid(datum.epbc_status)"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.epbc_status_code === 'CR' ? 0 : datum.epbc_status_code === 'EN' ? 1 : datum.epbc_status_code === 'VU' ? 2 : 3",
+          "as": "status_rank"
+        }
+      ]
+    },
+    {
+      "name": "totals",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "ops": ["count", "max"],
+          "fields": [null, "source_extract_date"],
+          "as": ["count", "source_date"]
+        },
+        {
+          "type": "formula",
+          "expr": "'root'",
+          "as": "id"
+        },
+        {
+          "type": "formula",
+          "expr": "null",
+          "as": "parent"
+        },
+        {
+          "type": "formula",
+          "expr": "0",
+          "as": "weight"
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["order_derived_from_family"],
+          "ops": ["count"],
+          "as": ["count"]
+        },
+        {
+          "type": "formula",
+          "expr": "'order:' + datum.order_derived_from_family",
+          "as": "id"
+        },
+        {
+          "type": "formula",
+          "expr": "'root'",
+          "as": "parent"
+        },
+        {
+          "type": "formula",
+          "expr": "0",
+          "as": "weight"
+        }
+      ]
+    },
+    {
+      "name": "statuses",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "order_derived_from_family",
+            "epbc_status",
+            "epbc_status_code",
+            "status_rank"
+          ],
+          "ops": ["count"],
+          "as": ["count"]
+        },
+        {
+          "type": "joinaggregate",
+          "groupby": ["order_derived_from_family"],
+          "ops": ["sum"],
+          "fields": ["count"],
+          "as": ["order_total"]
+        },
+        {
+          "type": "formula",
+          "expr": "'status:' + datum.order_derived_from_family + ':' + datum.epbc_status",
+          "as": "id"
+        },
+        {
+          "type": "formula",
+          "expr": "'order:' + datum.order_derived_from_family",
+          "as": "parent"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.count",
+          "as": "weight"
+        }
+      ]
+    },
+    {
+      "name": "tree",
+      "source": ["totals", "orders", "statuses"],
+      "transform": [
+        {
+          "type": "stratify",
+          "key": "id",
+          "parentKey": "parent"
+        },
+        {
+          "type": "treemap",
+          "field": "weight",
+          "sort": {
+            "field": "value",
+            "order": "descending"
+          },
+          "method": "squarify",
+          "ratio": 1.4,
+          "round": true,
+          "paddingInner": 3,
+          "paddingOuter": 2,
+          "paddingTop": 30,
+          "size": [
+            {"signal": "width"},
+            {"signal": "height"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "groups",
+      "source": "tree",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.depth === 1"
+        }
+      ]
+    },
+    {
+      "name": "cells",
+      "source": "tree",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.depth === 2"
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "risk_colour",
+      "type": "ordinal",
+      "domain": {
+        "data": "statuses",
+        "field": "epbc_status",
+        "sort": {
+          "op": "min",
+          "field": "status_rank",
+          "order": "ascending"
+        }
+      },
+      "range": [
+        "#993C43",
+        "#CF7843",
+        "#E5C87D"
+      ]
+    }
+  ],
+  "legends": [
+    {
+      "fill": "risk_colour",
+      "orient": "bottom",
+      "direction": "horizontal",
+      "columns": {
+        "signal": "width < 760 ? 1 : 3"
+      },
+      "gridAlign": "all",
+      "columnPadding": 40,
+      "rowPadding": 12,
+      "symbolType": "square",
+      "symbolSize": 196,
+      "labelFont": "Source Sans 3",
+      "labelFontSize": 14,
+      "labelColor": "#444444",
+      "labelOffset": 10,
+      "labelLimit": 260,
+      "offset": 24
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "from": {
+        "data": "totals"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"value": 2},
+          "y": {"value": 4},
+          "baseline": {"value": "top"},
+          "text": {
+            "signal": "format(datum.count, ',') + ' listed taxa | Snapshot: ' + datum.source_date"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 13},
+          "fill": {"value": "#555555"},
+          "limit": {"signal": "width - 4"}
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "groups"
+      },
+      "interactive": true,
+      "encode": {
+        "update": {
+          "x": {"field": "x0"},
+          "y": {"field": "y0"},
+          "x2": {"field": "x1"},
+          "y2": {"field": "y1"},
+          "fill": {"value": "#F1F3EF"},
+          "stroke": {"value": "#FFFFFF"},
+          "tooltip": {
+            "signal": "{'Insect order': datum.order_derived_from_family, 'Nationally listed taxa': datum.count}"
+          }
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {
+        "data": "cells"
+      },
+      "encode": {
+        "update": {
+          "x": {"field": "x0"},
+          "y": {"field": "y0"},
+          "x2": {"field": "x1"},
+          "y2": {"field": "y1"},
+          "fill": {
+            "scale": "risk_colour",
+            "field": "epbc_status"
+          },
+          "stroke": {"value": "#FFFFFF"},
+          "strokeWidth": {"value": 1},
+          "cursor": {"value": "pointer"},
+          "fillOpacity": {"value": 1},
+          "tooltip": {
+            "signal": "{'Insect order': datum.order_derived_from_family, 'Threat category': datum.epbc_status, 'Listed taxa in this rectangle': datum.count, 'Listed taxa in this order': datum.order_total, 'Share of this order': format(datum.count / datum.order_total, '.1%'), 'Share of all listed taxa': format(datum.count / data('totals')[0].count, '.1%')}"
+          }
+        },
+        "hover": {
+          "fillOpacity": {"value": 0.8}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "groups"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "datum.x0 + 6"},
+          "y": {"signal": "datum.y0 + 7"},
+          "baseline": {"value": "top"},
+          "text": {
+            "field": "order_derived_from_family"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 14},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "limit": {
+            "signal": "max(0, datum.x1 - datum.x0 - 12)"
+          },
+          "opacity": {
+            "signal": "datum.x1 - datum.x0 > 35 && datum.y1 - datum.y0 > 30 ? 1 : 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "cells"
+      },
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "(datum.x0 + datum.x1) / 2"
+          },
+          "y": {
+            "signal": "(datum.y0 + datum.y1) / 2"
+          },
+          "align": {"value": "center"},
+          "baseline": {"value": "middle"},
+          "text": {
+            "signal": "datum.x1 - datum.x0 < 100 ? format(datum.count, ',') : datum.epbc_status_code + ' · ' + format(datum.count, ',')"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 14},
+          "fontWeight": {"value": 700},
+          "fill": {
+            "signal": "datum.epbc_status_code === 'CR' ? '#FFFFFF' : '#252525'"
+          },
+          "limit": {
+            "signal": "max(0, datum.x1 - datum.x0 - 10)"
+          },
+          "opacity": {
+            "signal": "datum.x1 - datum.x0 >= 25 && datum.y1 - datum.y0 >= 22 ? 1 : 0"
+          }
+        }
+      }
+    }
+  ]
+}

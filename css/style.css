@@ -108,14 +108,16 @@ body {
     margin-top: 0;
 }
 
-.chart4-container {
+.chart4-container,
+.chart5-container {
     margin-top: var(--chart-gap);
 }
 
 #chart1,
 #chart2,
 #chart3,
-#chart4 {
+#chart4,
+#chart5 {
     width: 100%;
     min-width: 0;
 }
