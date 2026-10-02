@@ -1,0 +1,227 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "description": "One dot per butterfly species, grouped by the number of newly documented seasonal months. All species and counts are loaded or calculated from the source CSV.",
+  "data": {
+    "url": "data/inaturalist_out_of_season_species_2026.csv",
+    "format": { "type": "csv" }
+  },
+  "width": "container",
+  "height": 330,
+  "autosize": {
+    "type": "fit-x",
+    "contains": "padding",
+    "resize": true
+  },
+  "padding": {
+    "left": 15,
+    "right": 15,
+    "top": 20,
+    "bottom": 10
+  },
+  "background": "#FFFFFF",
+  "transform": [
+    {
+      "calculate": "toNumber(datum.NewMonthCount)",
+      "as": "new_month_count"
+    },
+    {
+      "filter": "isValid(datum.new_month_count) && datum.new_month_count > 0"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "count",
+          "as": "species_count"
+        }
+      ],
+      "groupby": ["new_month_count"]
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "count",
+          "as": "total_species"
+        }
+      ]
+    },
+    {
+      "calculate": "datum.species_count / datum.total_species",
+      "as": "species_share"
+    },
+    {
+      "window": [
+        {
+          "op": "row_number",
+          "as": "species_index"
+        }
+      ],
+      "sort": [
+        {
+          "field": "ScientificName",
+          "order": "ascending"
+        }
+      ],
+      "groupby": ["new_month_count"]
+    },
+    {
+      "calculate": "datum.new_month_count + ((datum.species_index - 1) % 5 - (min(datum.species_count, 5) - 1) / 2) * 0.09",
+      "as": "dot_x"
+    },
+    {
+      "calculate": "floor((datum.species_index - 1) / 5) + 1",
+      "as": "dot_row"
+    },
+    {
+      "calculate": "ceil(datum.species_count / 5) + 0.8",
+      "as": "label_row"
+    },
+    {
+      "calculate": "format(datum.species_count, ',') + ' species'",
+      "as": "count_label"
+    }
+  ],
+  "encoding": {
+    "x": {
+      "field": "dot_x",
+      "type": "quantitative",
+      "scale": {
+        "zero": false,
+        "nice": false,
+        "padding": 28
+      },
+      "axis": {
+        "title": [
+          "Newly documented months",
+          "per butterfly species"
+        ],
+        "tickMinStep": 1,
+        "format": "d",
+        "grid": false,
+        "labelPadding": 10,
+        "titlePadding": 18,
+        "domainColor": "#D8DEDA",
+        "tickColor": "#D8DEDA"
+      }
+    },
+    "y": {
+      "field": "dot_row",
+      "type": "quantitative",
+      "scale": {
+        "zero": true,
+        "nice": false
+      },
+      "axis": null
+    }
+  },
+  "layer": [
+    {
+      "params": [
+        {
+          "name": "hover_species",
+          "select": {
+            "type": "point",
+            "fields": ["ScientificName"],
+            "on": "pointerover",
+            "clear": "pointerout"
+          }
+        }
+      ],
+      "mark": {
+        "type": "circle",
+        "size": {
+          "expr": "pow(max(2, min(10, abs(scale('x', 1.09) - scale('x', 1)) - 1)), 2)"
+        },
+        "opacity": 1,
+        "stroke": "#FFFFFF",
+        "strokeWidth": 1,
+        "cursor": "pointer"
+      },
+      "encoding": {
+        "color": {
+          "condition": {
+            "param": "hover_species",
+            "empty": false,
+            "value": "#C46A36"
+          },
+          "value": "#178F83"
+        },
+        "tooltip": [
+          {
+            "field": "CommonName",
+            "type": "nominal",
+            "title": "Butterfly"
+          },
+          {
+            "field": "ScientificName",
+            "type": "nominal",
+            "title": "Scientific name"
+          },
+          {
+            "field": "new_month_count",
+            "type": "quantitative",
+            "title": "Newly documented months",
+            "format": "d"
+          },
+          {
+            "field": "NewMonths",
+            "type": "nominal",
+            "title": "Months"
+          },
+          {
+            "field": "species_count",
+            "type": "quantitative",
+            "title": "Species in this group",
+            "format": ","
+          },
+          {
+            "field": "species_share",
+            "type": "quantitative",
+            "title": "Share of species in this file",
+            "format": ".1%"
+          }
+        ]
+      }
+    },
+    {
+      "transform": [
+        {
+          "filter": "datum.species_index == 1"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "font": "Source Sans 3",
+        "fontSize": 14,
+        "fontWeight": 700,
+        "baseline": "middle",
+        "color": "#252525"
+      },
+      "encoding": {
+        "x": {
+          "field": "new_month_count",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "label_row",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "count_label"
+        }
+      }
+    }
+  ],
+  "config": {
+    "font": "Source Sans 3",
+    "view": {
+      "stroke": null
+    },
+    "axis": {
+      "labelFontSize": 13,
+      "titleFontSize": 14,
+      "labelColor": "#444444",
+      "titleColor": "#444444",
+      "titleFontWeight": 600
+    }
+  }
+}

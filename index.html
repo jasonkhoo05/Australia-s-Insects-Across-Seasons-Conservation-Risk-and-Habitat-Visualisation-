@@ -1,204 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Hidden in Plain Sight | Australia's Insects</title>
 
-
-    <!-- =====================================================
-         GOOGLE FONTS
-    ====================================================== -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap"
         rel="stylesheet"
     >
 
+    <link rel="stylesheet" href="css/style.css">
 
-    <!-- =====================================================
-         OUR CSS
-    ====================================================== -->
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
-
-    <!-- =====================================================
-         VEGA
-    ====================================================== -->
-
-    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-
-
-    <!-- =====================================================
-         VEGA-LITE
-    ====================================================== -->
-
+    <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
-
-
-    <!-- =====================================================
-         VEGA EMBED
-    ====================================================== -->
-
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
 </head>
 
-
 <body>
-
     <main class="page-container">
 
-
-        <!-- =====================================================
-             INTRODUCTION
-        ====================================================== -->
-
         <header class="hero">
-
-            <h1>
-                Hidden in Plain Sight
-            </h1>
+            <h1>Hidden in Plain Sight</h1>
 
             <p class="hero-subtitle">
-                Australia's insects across seasons, conservation
-                risk and habitat
+                Australia's insects across seasons, conservation risk and habitat
             </p>
-
         </header>
-
-
-        <!-- =====================================================
-             SECTION 1 — CITIZEN SCIENCE
-        ====================================================== -->
 
         <section class="visualisation-section">
 
             <div class="story-text">
-
-                <p class="section-number">
-                    01 — CITIZEN SCIENCE
-                </p>
+                <p class="section-number">01 — CITIZEN SCIENCE</p>
 
                 <h2>
-                    Citizen science is revealing much of Australia's
-                    butterfly diversity
+                    Citizen science is revealing much of Australia's butterfly diversity
                 </h2>
 
                 <p>
-                    Butterfly observations contributed by the public
-                    provide a broad picture of the species that have
-                    been documented across Australia.
+                    Butterfly observations contributed by the public provide a
+                    broad picture of the species that have been documented
+                    across Australia.
                 </p>
 
                 <p>
-                    The chart below compares the number of butterfly
-                    species represented in the iNaturalist dataset
-                    with the Australian butterfly baseline used in
-                    the study.
+                    The chart below compares the number of butterfly species
+                    represented in the iNaturalist dataset with the Australian
+                    butterfly baseline used in the study.
                 </p>
-
             </div>
 
-
-            <!-- =================================================
-                 CHART 1
-            ================================================== -->
-
             <div class="chart-container">
-
-                <div id="chart1"></div>
-
+                <div
+                    id="chart1"
+                    aria-label="Butterfly diversity captured by citizen science"
+                ></div>
             </div>
 
         </section>
 
-
-        <!-- =====================================================
-             CHART 2 — SEASONAL RECORDS
-        ====================================================== -->
-
         <section class="visualisation-section">
 
             <div class="story-text seasonal-story-text">
+                <p class="section-number">02 — SEASONAL DISCOVERY</p>
 
-                <p class="section-number">
-                    02 — SEASONAL DISCOVERY
-                </p>
-
-                <h2>
-                    New seasonal records reveal two different patterns
-                </h2>
+                <h2>New seasonal records reveal two different patterns</h2>
 
                 <p>
-                    Citizen-science observations are not only adding
-                    more butterfly records. They are also documenting
-                    some species during months outside their previously
-                    recorded seasonal windows.
+                    Citizen-science observations are not only adding more
+                    butterfly records. They are also documenting some species
+                    during months outside their previously recorded seasonal windows.
                 </p>
 
                 <p>
-                    Across all species, these new records concentrate
-                    in particular months of the year. Looking at
-                    individual butterflies, however, reveals that the
-                    pattern differs considerably between species.
+                    Across all species, these new records concentrate in particular
+                    months of the year. Looking at individual butterflies, however,
+                    reveals that the pattern differs considerably between species.
                 </p>
-
             </div>
 
-
-            <!-- =================================================
-                CHARTS 2 + 3
-            ================================================== -->
-
+            <!-- Charts 2 and 3 share one full-width row. -->
             <div class="seasonal-chart-row">
 
                 <div class="chart-container seasonal-chart-container">
-
-                    <div id="chart2"></div>
-
+                    <div
+                        id="chart2"
+                        aria-label="New seasonal records by month"
+                    ></div>
                 </div>
 
-
                 <div class="chart-container seasonal-chart-container">
-
-                    <div id="chart3"></div>
-
+                    <div
+                        id="chart3"
+                        aria-label="New seasonal records by butterfly species"
+                    ></div>
                 </div>
 
             </div>
+
+            <!-- Chart 4 sits below the complete Charts 2 and 3 row. -->
+            <div class="chart-container chart4-container">
+
+                <div class="chart-heading">
+                    <h3>How widespread are the seasonal additions?</h3>
+
+                    <p>
+                        Each dot represents one butterfly species in the seasonal-record
+                        file, grouped by its number of newly documented months.
+                        Dots wrap into rows of five; labels show the total species
+                        in each group. Hover over a dot to see the species and months.
+                    </p>
+                </div>
+
+                <div
+                    id="chart4"
+                    aria-label="Species grouped by the number of newly documented months"
+                ></div>
+
+                <p class="chart-note">
+                    These records extend documented seasonal knowledge. They do
+                    not, on their own, demonstrate population growth or a
+                    climate-driven change in butterfly activity.
+                </p>
+
+            </div>
+
+            <p class="source-note">
+                Seasonal data:
+
+                <a
+                    href="https://doi.org/10.1111/aen.70067"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >Backstrom (2026)</a>,
+
+                using Australian iNaturalist observations made before 2026.
+
+                <a
+                    href="https://github.com/Louis-Backstrom/AEN-Paper"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >Published study data</a>.
+            </p>
 
         </section>
 
     </main>
 
-
-    <!-- =========================================================
-         OUR JAVASCRIPT
-    ========================================================== -->
-
     <script src="js/visualisation.js"></script>
-
 </body>
-
 </html>

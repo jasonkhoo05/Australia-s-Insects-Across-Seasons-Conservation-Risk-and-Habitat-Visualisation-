@@ -1,55 +1,171 @@
-// ============================================================
-// Chart 1 — Butterfly diversity captured by citizen science
-// ============================================================
+// All observations and counts come from the CSV URLs in the JSON specs.
+// Numeric constants below control layout only.
 
-vegaEmbed(
-    "#chart1",
-    "specs/chart1_waffle.json",
-    {
-        actions: false
+function wrapText(text, maxWidth, font) {
+    const context = document.createElement("canvas").getContext("2d");
+
+    context.font = font;
+
+    const lines = [];
+    let line = "";
+
+    for (const word of String(text).split(/\s+/)) {
+        const candidate = line ? `${line} ${word}` : word;
+
+        if (line && context.measureText(candidate).width > maxWidth) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = candidate;
+        }
     }
-)
-.then(function () {
-    console.log("Chart 1 loaded successfully.");
-})
-.catch(function (error) {
-    console.error("Error loading Chart 1:", error);
-});
 
-
-// ============================================================
-// Chart 2 — Newly documented seasonal records by month
-// ============================================================
-
-vegaEmbed(
-    "#chart2",
-    "specs/chart2_seasonal.json",
-    {
-        actions: false
+    if (line) {
+        lines.push(line);
     }
-)
-.then(function () {
-    console.log("Chart 2 loaded successfully.");
-})
-.catch(function (error) {
-    console.error("Error loading Chart 2:", error);
-});
 
+    return lines;
+}
 
-// ============================================================
-// Chart 3 — Species × month seasonal-record heatmap
-// ============================================================
+async function mountChart(id, path) {
+    const element = document.getElementById(id);
+    const response = await fetch(path);
 
-vegaEmbed(
-    "#chart3",
-    "specs/chart3_heatmap.json",
-    {
-        actions: false
+    if (!response.ok) {
+        throw new Error(`${path}: HTTP ${response.status}`);
     }
-)
-.then(function () {
-    console.log("Chart 3 loaded successfully.");
-})
-.catch(function (error) {
-    console.error("Error loading Chart 3:", error);
-});
+
+    const original = await response.json();
+
+    let currentView;
+    let lastWidth = -1;
+    let timer;
+
+    async function render() {
+        const width = Math.floor(element.clientWidth);
+
+        if (width <= 0 || width === lastWidth) {
+            return;
+        }
+
+        lastWidth = width;
+
+        const spec = structuredClone(original);
+
+        if (id !== "chart1") {
+            spec.width = width;
+
+            spec.autosize = {
+                type: "fit-x",
+                contains: "padding",
+                resize: true
+            };
+        }
+
+        if ((id === "chart2" || id === "chart3") && spec.title) {
+            const titleWidth = Math.max(100, width - 20);
+
+            spec.title.text = wrapText(
+                spec.title.text,
+                titleWidth,
+                '700 20px "Source Serif 4"'
+            );
+
+            spec.title.subtitle = [spec.title.subtitle]
+                .flat()
+                .flatMap(text =>
+                    wrapText(
+                        text,
+                        titleWidth,
+                        '13px "Source Sans 3"'
+                    )
+                );
+        }
+
+        if (id === "chart2") {
+            spec.resolve = {
+                scale: {
+                    radius: "independent"
+                }
+            };
+
+            const factor = Math.min(
+                1,
+                Math.max(0.1, (width - 10) / 430)
+            );
+
+            spec.height = 430 * factor;
+
+            for (const layer of spec.layer) {
+                for (const key of [
+                    "innerRadius",
+                    "radius",
+                    "radiusOffset"
+                ]) {
+                    if (typeof layer.mark[key] === "number") {
+                        layer.mark[key] *= factor;
+                    }
+                }
+
+                const scale = layer.encoding?.radius?.scale;
+
+                if (scale?.range) {
+                    scale.range = scale.range.map(
+                        value => value * factor
+                    );
+                }
+            }
+        }
+
+        if (currentView) {
+            currentView.finalize();
+        }
+
+        const result = await vegaEmbed(element, spec, {
+            actions: false,
+            renderer: "svg"
+        });
+
+        currentView = result.view;
+    }
+
+    await render();
+
+    const observer = new ResizeObserver(() => {
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+            render().catch(error => {
+                console.error(`Error resizing ${id}:`, error);
+            });
+        }, 150);
+    });
+
+    observer.observe(element);
+}
+
+async function initialiseCharts() {
+    await document.fonts.ready;
+
+    const charts = [
+        ["chart1", "specs/chart1_waffle.json"],
+        ["chart2", "specs/chart2_seasonal.json"],
+        ["chart3", "specs/chart3_heatmap.json"],
+        ["chart4", "specs/chart4_month_distribution.json"]
+    ];
+
+    await Promise.all(
+        charts.map(async ([id, path]) => {
+            try {
+                await mountChart(id, path);
+            } catch (error) {
+                console.error(`Error loading ${id}:`, error);
+
+                document.getElementById(id).textContent =
+                    "This chart could not load. Check the JSON and CSV paths.";
+            }
+        })
+    );
+}
+
+initialiseCharts();
