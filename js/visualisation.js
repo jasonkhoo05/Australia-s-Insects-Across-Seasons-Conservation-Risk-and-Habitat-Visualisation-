@@ -37,7 +37,7 @@ async function mountChart(id, path) {
 
     const original = await response.json();
 
-    let currentView;
+    let currentEmbed;
     let lastWidth = -1;
     let timer;
 
@@ -132,17 +132,17 @@ async function mountChart(id, path) {
             }
         }
 
-        if (currentView) {
-            currentView.finalize();
+        if (currentEmbed) {
+            currentEmbed.finalize();
         }
 
         const result = await vegaEmbed(element, spec, {
-            actions: false,
+            actions: true,
             renderer: "svg",
             mode: isVega ? "vega" : "vega-lite"
         });
 
-        currentView = result.view;
+        currentEmbed = result;
     }
 
     await render();
