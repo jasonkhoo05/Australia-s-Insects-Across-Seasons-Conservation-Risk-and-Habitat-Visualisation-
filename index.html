@@ -178,10 +178,21 @@
 
                     <p>
                         Each labelled group is an insect order. Lepidoptera
-                        includes butterflies and moths; Coleoptera means beetles;
-                        Hymenoptera includes bees, wasps and ants. Hover over a
+                        includes butterflies and moths;
+                    </p>
+
+                    <p>
+                        Coleoptera means beetles;
+                        Hymenoptera includes bees, wasps and ants.
+                    </p>
+
+                    <p>
+                        Hover over a
                         coloured rectangle for its full threat category and count.
                         Rectangle labels show counts, with status codes where space allows.
+                    </p>
+
+                    <p>
                         CR = Critically Endangered; EN = Endangered;
                         VU = Vulnerable.
                     </p>
@@ -201,6 +212,47 @@
 
             </div>
 
+
+            <!-- Chart 6 connects the same listed taxa across three attributes. -->
+            <div class="chart-container chart6-container">
+
+                <div class="chart-heading">
+                    <h3>How do insect group, threat and geography connect?</h3>
+
+                    <p>
+                        Read from left to right: insect order, national threat
+                        category,then the number of states or territories listed
+                        for each taxon.
+                    </p>
+
+                    <p>                        
+                        Wider ribbons represent more taxa, and
+                        ribbon colour follows the threat category.
+                        Hover over a ribbon to inspect its complete pathway.
+                    </p>
+
+                    <p>
+                        Click a vertical block to highlight its pathways; click
+                        it again or double-click the chart to clear the highlight.
+                    </p>
+                </div>
+
+                <div
+                    id="chart6"
+                    aria-label="Alluvial chart linking nationally listed insect taxa by order, threat category and number of listed states or territories"
+                ></div>
+
+                <p class="chart-note">
+                    CR = Critically Endangered; EN = Endangered; VU = Vulnerable.
+                    A taxon is a listed species or subspecies. One state or
+                    territory means one association in this extract; it does not
+                    measure range area or prove that a taxon occurs nowhere else.
+                    Ribbons connect classifications of the same taxa, rather than
+                    showing movement between places or changes over time.
+                </p>
+
+            </div>
+
             <p class="source-note">
                 Conservation data:
 
@@ -210,7 +262,7 @@
                     rel="noopener noreferrer"
                 >DCCEEW — EPBC Act Threatened Species State Lists</a>.
 
-                The source date is shown above the treemap. Insect order is
+                The source date is shown above each conservation chart. Insect order is
                 derived from the family classification in the supplied dataset.
             </p>
 

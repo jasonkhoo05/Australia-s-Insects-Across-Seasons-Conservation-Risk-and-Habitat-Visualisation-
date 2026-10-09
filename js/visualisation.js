@@ -62,6 +62,10 @@ async function mountChart(id, path) {
                 (width < 560 ? 580 : 430) * heightScale
             );
 
+            if (id === "chart6") {
+                spec.height = width < 600 ? 740 : 650;
+            }
+
             spec.autosize = {
                 type: "fit-x",
                 contains: "padding",
@@ -168,7 +172,8 @@ async function initialiseCharts() {
         ["chart2", "specs/chart2_seasonal.json"],
         ["chart3", "specs/chart3_heatmap.json"],
         ["chart4", "specs/chart4_month_distribution.json"],
-        ["chart5", "specs/chart5_conservation_treemap.json"]
+        ["chart5", "specs/chart5_conservation_treemap.json"],
+        ["chart6", "specs/chart6_conservation_alluvial.json"]
     ];
 
     await Promise.all(

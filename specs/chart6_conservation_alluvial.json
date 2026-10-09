@@ -1,0 +1,442 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Alluvial chart connecting insect order, national EPBC threat category and the number of listed state/territory associations. Counts, pathways, annotation and snapshot date are derived from the supplied CSV; ribbon widths represent taxa, not movement or abundance.",
+  "width": 956,
+  "height": 650,
+  "padding": {"left": 0, "right": 0, "top": 0, "bottom": 5},
+  "autosize": {"type": "fit-x", "contains": "padding", "resize": true},
+  "background": "#FFFFFF",
+  "signals": [
+    {"name": "nodeWidth", "value": 16},
+    {"name": "nodeGap", "value": 17},
+    {"name": "plotTop", "update": "width < 600 ? 125 : 100"},
+    {"name": "plotHeight", "update": "height - plotTop - 20"},
+    {"name": "leftX", "update": "width < 600 ? 100 : 150"},
+    {"name": "middleX", "update": "(leftX + rightX) / 2"},
+    {"name": "rightX", "update": "width < 600 ? width - nodeWidth - 85 : width - nodeWidth - 155"},
+    {"name": "totalTaxa", "update": "length(data('totals')) ? data('totals')[0].count : 0"},
+    {
+      "name": "unitHeight",
+      "update": "max(1, (plotHeight - (max(length(data('orderTotals')), length(data('statusTotals')), length(data('extentTotals'))) - 1) * nodeGap) / max(1, totalTaxa))"
+    },
+    {
+      "name": "hoverPath",
+      "value": null,
+      "on": [{"events": "@ribbons:pointerover", "update": "datum.flow_id"}, {"events": "@ribbons:pointerout", "update": "null"}]
+    },
+    {
+      "name": "hoverNode",
+      "value": null,
+      "on": [
+        {"events": "@nodes:pointerover", "update": "{stage: datum.stage, key: datum.key}"},
+        {"events": "@nodes:pointerout", "update": "null"}
+      ]
+    },
+    {
+      "name": "selectedNode",
+      "value": null,
+      "on": [
+        {
+          "events": "@nodes:click",
+          "update": "selectedNode && selectedNode.stage === datum.stage && selectedNode.key === datum.key ? null : {stage: datum.stage, key: datum.key}"
+        },
+        {"events": "view:dblclick", "update": "null"}
+      ]
+    },
+    {"name": "focusNode", "update": "hoverNode || selectedNode"}
+  ],
+  "data": [
+    {
+      "name": "taxa",
+      "url": "data/dcceew_threatened_insects_with_order_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum.scientific_name) && isValid(datum.order_derived_from_family) && isValid(datum.epbc_status_code)"
+        },
+        {"type": "formula", "expr": "datum.order_derived_from_family", "as": "order"},
+        {
+          "type": "formula",
+          "expr": "datum.epbc_status_code === 'CR' ? 0 : datum.epbc_status_code === 'EN' ? 1 : datum.epbc_status_code === 'VU' ? 2 : 3",
+          "as": "status_rank"
+        },
+        {
+          "type": "formula",
+          "expr": "isValid(datum.jurisdictions) && trim(datum.jurisdictions) !== '' ? length(split(trim(datum.jurisdictions), '|')) : 0",
+          "as": "jurisdiction_count"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.jurisdiction_count === 1 ? 'One state/territory' : datum.jurisdiction_count > 1 ? 'Multiple states/territories' : 'Not supplied'",
+          "as": "extent"
+        },
+        {"type": "formula", "expr": "datum.jurisdiction_count === 1 ? 0 : datum.jurisdiction_count > 1 ? 1 : 2", "as": "extent_rank"}
+      ]
+    },
+    {
+      "name": "totals",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": ["scientific_name", "source_extract_date"],
+          "ops": ["distinct", "max"],
+          "as": ["count", "source_date"]
+        }
+      ]
+    },
+    {
+      "name": "singleState",
+      "source": "taxa",
+      "transform": [
+        {"type": "filter", "expr": "datum.jurisdiction_count === 1"},
+        {"type": "aggregate", "fields": ["scientific_name"], "ops": ["distinct"], "as": ["count"]}
+      ]
+    },
+    {
+      "name": "flows",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["order", "epbc_status", "epbc_status_code", "status_rank", "extent", "extent_rank"],
+          "fields": ["scientific_name"],
+          "ops": ["distinct"],
+          "as": ["count"]
+        },
+        {"type": "formula", "expr": "datum.order + '|' + datum.epbc_status_code + '|' + datum.extent", "as": "flow_id"}
+      ]
+    },
+    {
+      "name": "orderTotals",
+      "source": "flows",
+      "transform": [
+        {"type": "aggregate", "groupby": ["order"], "fields": ["count"], "ops": ["sum"], "as": ["count"]},
+        {
+          "type": "stack",
+          "groupby": [],
+          "field": "count",
+          "sort": {"field": ["count", "order"], "order": ["descending", "ascending"]},
+          "as": ["start", "end"]
+        },
+        {
+          "type": "window",
+          "sort": {"field": ["count", "order"], "order": ["descending", "ascending"]},
+          "ops": ["row_number"],
+          "as": ["node_rank"]
+        }
+      ]
+    },
+    {
+      "name": "orderNodes",
+      "source": "orderTotals",
+      "transform": [
+        {"type": "formula", "expr": "0", "as": "stage"},
+        {"type": "formula", "expr": "datum.order", "as": "key"},
+        {"type": "formula", "expr": "leftX", "as": "x"},
+        {
+          "type": "formula",
+          "expr": "plotTop + (plotHeight - (totalTaxa * unitHeight + (length(data('orderTotals')) - 1) * nodeGap)) / 2 + datum.start * unitHeight + (datum.node_rank - 1) * nodeGap",
+          "as": "y0"
+        },
+        {"type": "formula", "expr": "datum.y0 + datum.count * unitHeight", "as": "y1"}
+      ]
+    },
+    {
+      "name": "statusTotals",
+      "source": "flows",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["epbc_status", "epbc_status_code", "status_rank"],
+          "fields": ["count"],
+          "ops": ["sum"],
+          "as": ["count"]
+        },
+        {
+          "type": "stack",
+          "groupby": [],
+          "field": "count",
+          "sort": {"field": "status_rank", "order": "ascending"},
+          "as": ["start", "end"]
+        },
+        {"type": "window", "sort": {"field": "status_rank", "order": "ascending"}, "ops": ["row_number"], "as": ["node_rank"]}
+      ]
+    },
+    {
+      "name": "statusNodes",
+      "source": "statusTotals",
+      "transform": [
+        {"type": "formula", "expr": "1", "as": "stage"},
+        {"type": "formula", "expr": "datum.epbc_status_code", "as": "key"},
+        {"type": "formula", "expr": "middleX", "as": "x"},
+        {
+          "type": "formula",
+          "expr": "plotTop + (plotHeight - (totalTaxa * unitHeight + (length(data('statusTotals')) - 1) * nodeGap)) / 2 + datum.start * unitHeight + (datum.node_rank - 1) * nodeGap",
+          "as": "y0"
+        },
+        {"type": "formula", "expr": "datum.y0 + datum.count * unitHeight", "as": "y1"}
+      ]
+    },
+    {
+      "name": "extentTotals",
+      "source": "flows",
+      "transform": [
+        {"type": "aggregate", "groupby": ["extent", "extent_rank"], "fields": ["count"], "ops": ["sum"], "as": ["count"]},
+        {
+          "type": "stack",
+          "groupby": [],
+          "field": "count",
+          "sort": {"field": "extent_rank", "order": "ascending"},
+          "as": ["start", "end"]
+        },
+        {"type": "window", "sort": {"field": "extent_rank", "order": "ascending"}, "ops": ["row_number"], "as": ["node_rank"]}
+      ]
+    },
+    {
+      "name": "extentNodes",
+      "source": "extentTotals",
+      "transform": [
+        {"type": "formula", "expr": "2", "as": "stage"},
+        {"type": "formula", "expr": "datum.extent", "as": "key"},
+        {"type": "formula", "expr": "rightX", "as": "x"},
+        {
+          "type": "formula",
+          "expr": "plotTop + (plotHeight - (totalTaxa * unitHeight + (length(data('extentTotals')) - 1) * nodeGap)) / 2 + datum.start * unitHeight + (datum.node_rank - 1) * nodeGap",
+          "as": "y0"
+        },
+        {"type": "formula", "expr": "datum.y0 + datum.count * unitHeight", "as": "y1"}
+      ]
+    },
+    {"name": "allNodes", "source": ["orderNodes", "statusNodes", "extentNodes"]},
+    {
+      "name": "positionedFlows",
+      "source": "flows",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "orderNodes",
+          "key": "order",
+          "fields": ["order"],
+          "values": ["y0", "node_rank"],
+          "as": ["order_y0", "order_rank"]
+        },
+        {
+          "type": "lookup",
+          "from": "statusNodes",
+          "key": "epbc_status_code",
+          "fields": ["epbc_status_code"],
+          "values": ["y0"],
+          "as": ["status_y0"]
+        },
+        {"type": "lookup", "from": "extentNodes", "key": "extent", "fields": ["extent"], "values": ["y0"], "as": ["extent_y0"]},
+        {
+          "type": "stack",
+          "groupby": ["order"],
+          "field": "count",
+          "sort": {"field": ["status_rank", "extent_rank"], "order": ["ascending", "ascending"]},
+          "as": ["order_start", "order_end"]
+        },
+        {
+          "type": "stack",
+          "groupby": ["epbc_status_code"],
+          "field": "count",
+          "sort": {"field": ["order_rank", "extent_rank"], "order": ["ascending", "ascending"]},
+          "as": ["status_start", "status_end"]
+        },
+        {
+          "type": "stack",
+          "groupby": ["extent"],
+          "field": "count",
+          "sort": {"field": ["status_rank", "order_rank"], "order": ["ascending", "ascending"]},
+          "as": ["extent_start", "extent_end"]
+        },
+        {"type": "formula", "expr": "datum.order_y0 + datum.order_start * unitHeight", "as": "oy0"},
+        {"type": "formula", "expr": "datum.order_y0 + datum.order_end * unitHeight", "as": "oy1"},
+        {"type": "formula", "expr": "datum.status_y0 + datum.status_start * unitHeight", "as": "sy0"},
+        {"type": "formula", "expr": "datum.status_y0 + datum.status_end * unitHeight", "as": "sy1"},
+        {"type": "formula", "expr": "datum.extent_y0 + datum.extent_start * unitHeight", "as": "ey0"},
+        {"type": "formula", "expr": "datum.extent_y0 + datum.extent_end * unitHeight", "as": "ey1"}
+      ]
+    },
+    {
+      "name": "ribbonSegments",
+      "source": "positionedFlows",
+      "transform": [
+        {"type": "fold", "fields": ["order_start", "extent_start"], "as": ["segment", "unused"]},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? leftX + nodeWidth : middleX + nodeWidth", "as": "x0"},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? middleX : rightX", "as": "x1"},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? datum.oy0 : datum.sy0", "as": "a0"},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? datum.oy1 : datum.sy1", "as": "a1"},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? datum.sy0 : datum.ey0", "as": "b0"},
+        {"type": "formula", "expr": "datum.segment === 'order_start' ? datum.sy1 : datum.ey1", "as": "b1"},
+        {"type": "formula", "expr": "(datum.x0 + datum.x1) / 2", "as": "cx"}
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "riskColour",
+      "type": "ordinal",
+      "domain": {"data": "statusNodes", "field": "epbc_status_code", "sort": {"op": "min", "field": "status_rank"}},
+      "range": ["#993C43", "#CF7843", "#E5C87D"]
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"value": 0},
+          "y": {"value": 0},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#555555"},
+          "text": {
+            "signal": "width < 600 ? [format(datum.count, ',') + ' nationally listed taxa', 'Snapshot: ' + datum.source_date] : format(datum.count, ',') + ' nationally listed taxa | Snapshot: ' + datum.source_date"
+          },
+          "lineHeight": {"value": 16}
+        }
+      },
+      "from": {"data": "totals"}
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"value": 0},
+          "y": {"signal": "width < 600 ? 43 : 25"},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 13},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#147A70"},
+          "text": {
+            "signal": "width < 600 ? [format(datum.count, ',') + ' of ' + format(totalTaxa, ',') + ' taxa (' + format(datum.count / max(1, totalTaxa), '.0%') + ')', 'are listed in one state/territory.'] : format(datum.count, ',') + ' of ' + format(totalTaxa, ',') + ' taxa (' + format(datum.count / max(1, totalTaxa), '.0%') + ') are listed in one state/territory.'"
+          },
+          "lineHeight": {"value": 17}
+        }
+      },
+      "from": {"data": "singleState"}
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"signal": "width < 600 ? leftX / 2 : leftX + nodeWidth / 2"},
+          "y": {"signal": "width < 600 ? 97 : 67"},
+          "align": {"value": "center"},
+          "fontSize": {"signal": "width < 600 ? 11 : 14"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "text": {"value": "Insect order"},
+          "lineHeight": {"value": 14}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"signal": "middleX + nodeWidth / 2"},
+          "y": {"signal": "width < 600 ? 97 : 67"},
+          "align": {"value": "center"},
+          "fontSize": {"signal": "width < 600 ? 11 : 14"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "text": {"signal": "width < 600 ? ['Threat','category'] : 'Threat category'"},
+          "lineHeight": {"value": 14}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"signal": "width < 600 ? rightX + nodeWidth + (width - rightX - nodeWidth) / 2 : rightX + nodeWidth / 2"},
+          "y": {"signal": "width < 600 ? 97 : 67"},
+          "align": {"value": "center"},
+          "fontSize": {"signal": "width < 600 ? 11 : 14"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "text": {"signal": "width < 600 ? ['Listed','geography'] : 'Listed geography'"},
+          "lineHeight": {"value": 14}
+        }
+      }
+    },
+    {
+      "name": "ribbons",
+      "type": "path",
+      "from": {"data": "ribbonSegments"},
+      "encode": {
+        "update": {
+          "path": {
+            "signal": "'M' + datum.x0 + ',' + datum.a0 + ' C' + datum.cx + ',' + datum.a0 + ' ' + datum.cx + ',' + datum.b0 + ' ' + datum.x1 + ',' + datum.b0 + ' L' + datum.x1 + ',' + datum.b1 + ' C' + datum.cx + ',' + datum.b1 + ' ' + datum.cx + ',' + datum.a1 + ' ' + datum.x0 + ',' + datum.a1 + ' Z'"
+          },
+          "fill": {"scale": "riskColour", "field": "epbc_status_code"},
+          "fillOpacity": {
+            "signal": "hoverPath ? (datum.flow_id === hoverPath ? 0.9 : 0.08) : focusNode ? (((focusNode.stage === 0 && datum.order === focusNode.key) || (focusNode.stage === 1 && datum.epbc_status_code === focusNode.key) || (focusNode.stage === 2 && datum.extent === focusNode.key)) ? 0.85 : 0.08) : 0.6"
+          },
+          "stroke": {"value": "#FFFFFF"},
+          "strokeWidth": {"value": 0.5},
+          "cursor": {"value": "pointer"},
+          "tooltip": {
+            "signal": "{'Insect order': datum.order, 'Threat category': datum.epbc_status, 'Listed geography': datum.extent, 'Listed taxa in this pathway': datum.count, 'Share of all listed taxa': format(datum.count / max(1, totalTaxa), '.1%')}"
+          }
+        }
+      }
+    },
+    {
+      "name": "nodes",
+      "type": "rect",
+      "from": {"data": "allNodes"},
+      "encode": {
+        "update": {
+          "x": {"field": "x"},
+          "width": {"signal": "nodeWidth"},
+          "y": {"field": "y0"},
+          "y2": {"field": "y1"},
+          "fill": {"signal": "datum.stage === 1 ? scale('riskColour', datum.epbc_status_code) : '#4A7771'"},
+          "stroke": {"signal": "selectedNode && selectedNode.stage === datum.stage && selectedNode.key === datum.key ? '#252525' : '#FFFFFF'"},
+          "strokeWidth": {"signal": "selectedNode && selectedNode.stage === datum.stage && selectedNode.key === datum.key ? 2 : 1"},
+          "cursor": {"value": "pointer"},
+          "tooltip": {
+            "signal": "{'Category': datum.stage === 1 ? datum.epbc_status : datum.key, 'Listed taxa': datum.count, 'Share of all listed taxa': format(datum.count / max(1, totalTaxa), '.1%'), 'Explore': 'Click to highlight; click again to clear'}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "font": {"value": "Source Sans 3"},
+          "x": {"signal": "datum.stage === 0 ? datum.x - 8 : datum.stage === 2 ? datum.x + nodeWidth + 8 : datum.x + nodeWidth / 2"},
+          "y": {"signal": "(datum.y0 + datum.y1) / 2"},
+          "align": {"signal": "datum.stage === 0 ? 'right' : datum.stage === 2 ? 'left' : 'center'"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"signal": "width < 600 ? 10 : 13"},
+          "lineHeight": {"value": 16},
+          "fontWeight": {"value": 700},
+          "fill": {"signal": "datum.stage === 1 && datum.epbc_status_code === 'CR' ? '#FFFFFF' : '#252525'"},
+          "text": {
+            "signal": "datum.stage === 1 ? datum.epbc_status_code + ' · ' + format(datum.count, ',') : datum.stage === 2 ? (width < 600 ? [datum.extent_rank === 0 ? 'One state/' : datum.extent_rank === 1 ? 'Multiple states/' : 'Not supplied', datum.extent_rank === 0 ? 'territory' : datum.extent_rank === 1 ? 'territories' : '', format(datum.count, ',') + ' taxa'] : [datum.extent_rank === 0 ? 'One state/territory' : datum.extent_rank === 1 ? 'Multiple states/' : 'Not supplied', datum.extent_rank === 1 ? 'territories · ' + format(datum.count, ',') : format(datum.count, ',') + ' taxa']) : datum.order + ' · ' + format(datum.count, ',')"
+          }
+        }
+      },
+      "name": "nodeLabels",
+      "from": {"data": "allNodes"}
+    }
+  ]
+}
