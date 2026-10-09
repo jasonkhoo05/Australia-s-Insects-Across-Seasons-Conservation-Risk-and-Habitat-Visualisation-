@@ -1,17 +1,13 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
-
   "description": "Circular seasonal chart showing butterfly species with newly documented out-of-season records by month.",
-
   "background": "#FFFFFF",
-
   "data": {
     "url": "data/inaturalist_out_of_season_month_summary_2026.csv",
     "format": {
       "type": "csv"
     }
   },
-
   "transform": [
     {
       "calculate": "toNumber(datum.month_number)",
@@ -34,36 +30,27 @@
       "as": "month_middle"
     }
   ],
-
   "width": 430,
   "height": 430,
-
   "title": {
     "text": "Seasonal discoveries peak from May to August",
-
     "subtitle": [
       "Each segment shows the number of butterfly species with",
       "newly documented out-of-season records in that month."
     ],
-
     "anchor": "start",
-
     "font": "Source Serif 4",
     "fontSize": 20,
     "fontWeight": "bold",
     "color": "#1F1F1F",
-
     "subtitleFont": "Source Sans 3",
     "subtitleFontSize": 13,
     "subtitleFontWeight": "normal",
     "subtitleColor": "#666666",
-
     "subtitleLineHeight": 18,
     "subtitlePadding": 7,
-
     "offset": 22
   },
-
   "layer": [
     {
       "mark": {
@@ -74,65 +61,41 @@
         "stroke": "#FFFFFF",
         "strokeWidth": 1
       },
-
       "encoding": {
         "theta": {
           "field": "month_start",
           "type": "quantitative",
-
           "scale": {
-            "domain": [
-              0,
-              1
-            ],
-
-            "range": [
-              0,
-              6.283185307179586
-            ]
+            "domain": [0, 1],
+            "range": [0, 6.283185307179586]
           }
         },
-
         "theta2": {
           "field": "month_end"
         },
-
         "radius": {
           "field": "record_count",
           "type": "quantitative",
-
           "scale": {
             "type": "sqrt",
             "zero": true,
-
-            "range": [
-              68,
-              170
-            ]
+            "range": [68, 170]
           }
         },
-
         "color": {
           "field": "record_count",
           "type": "quantitative",
-
           "scale": {
-            "range": [
-              "#D7EEE9",
-              "#178F83"
-            ]
+            "range": ["#D7EEE9", "#178F83"]
           },
-
           "legend": null
         },
-
         "tooltip": [
           {
             "field": "month",
             "type": "nominal",
             "title": "Month"
           },
-
           {
             "field": "record_count",
             "type": "quantitative",
@@ -142,53 +105,33 @@
         ]
       }
     },
-
     {
       "mark": {
         "type": "text",
-
         "font": "Source Sans 3",
         "fontSize": 13,
         "fontWeight": 700,
-
         "color": "#252525",
-
-        "radiusOffset": 10
+        "radiusOffset": 8
       },
-
       "encoding": {
         "theta": {
           "field": "month_middle",
           "type": "quantitative",
-
           "scale": {
-            "domain": [
-              0,
-              1
-            ],
-
-            "range": [
-              0,
-              6.283185307179586
-            ]
+            "domain": [0, 1],
+            "range": [0, 6.283185307179586]
           }
         },
-
         "radius": {
           "field": "record_count",
           "type": "quantitative",
-
           "scale": {
             "type": "sqrt",
             "zero": true,
-
-            "range": [
-              78,
-              185
-            ]
+            "range": [68, 170]
           }
         },
-
         "text": {
           "field": "record_count",
           "type": "quantitative",
@@ -196,38 +139,24 @@
         }
       }
     },
-
     {
       "mark": {
         "type": "text",
-
         "radius": 202,
-
         "font": "Source Sans 3",
         "fontSize": 14,
         "fontWeight": 600,
-
         "color": "#444444"
       },
-
       "encoding": {
         "theta": {
           "field": "month_middle",
           "type": "quantitative",
-
           "scale": {
-            "domain": [
-              0,
-              1
-            ],
-
-            "range": [
-              0,
-              6.283185307179586
-            ]
+            "domain": [0, 1],
+            "range": [0, 6.283185307179586]
           }
         },
-
         "text": {
           "field": "month",
           "type": "nominal"
@@ -235,12 +164,10 @@
       }
     }
   ],
-
   "config": {
     "view": {
       "stroke": null
     },
-
     "axis": {
       "grid": false
     }
