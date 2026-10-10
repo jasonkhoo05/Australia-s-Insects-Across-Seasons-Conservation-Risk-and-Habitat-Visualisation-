@@ -203,27 +203,6 @@
           "as": "included"
         }
       ]
-    },
-    {
-      "name": "connectors",
-      "source": "matrix",
-      "transform": [
-        {
-          "type": "filter",
-          "expr": "datum.included"
-        },
-        {
-          "type": "aggregate",
-          "groupby": ["jurisdictions", "jurisdiction_count"],
-          "fields": ["state_index", "state_index"],
-          "ops": ["min", "max"],
-          "as": ["first_index", "last_index"]
-        },
-        {
-          "type": "filter",
-          "expr": "datum.jurisdiction_count > 1"
-        }
-      ]
     }
   ],
   "scales": [
@@ -451,32 +430,6 @@
           },
           "text": {"field": "state_abbreviation"},
           "tooltip": {"signal": "datum.state_name_2026"}
-        }
-      }
-    },
-    {
-      "type": "rule",
-      "from": {"data": "connectors"},
-      "encode": {
-        "enter": {
-          "stroke": {"value": "#178f83"},
-          "strokeWidth": {"value": 2.5}
-        },
-        "update": {
-          "x": {
-            "scale": "columns",
-            "field": "jurisdictions",
-            "band": 0.5
-          },
-          "y": {
-            "signal": "scale('rows', data('states')[datum.first_index].state_abbreviation) + bandwidth('rows') / 2"
-          },
-          "y2": {
-            "signal": "scale('rows', data('states')[datum.last_index].state_abbreviation) + bandwidth('rows') / 2"
-          },
-          "opacity": {
-            "signal": "hoverCombination === null || hoverCombination === datum.jurisdictions ? 1 : 0.2"
-          }
         }
       }
     },
