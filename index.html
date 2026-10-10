@@ -149,7 +149,7 @@
 
         </section>
 
-        <!-- Chart 5 follows Chart 4 and shares its full-width layout. -->
+        <!-- Conservation charts share the same full-width layout. -->
         <section class="visualisation-section">
 
             <div class="story-text">
@@ -212,7 +212,6 @@
 
             </div>
 
-
             <!-- Chart 6 connects the same listed taxa across three attributes. -->
             <div class="chart-container chart6-container">
 
@@ -221,11 +220,11 @@
 
                     <p>
                         Read from left to right: insect order, national threat
-                        category,then the number of states or territories listed
+                        category, then the number of states or territories listed
                         for each taxon.
                     </p>
 
-                    <p>                        
+                    <p>
                         Wider ribbons represent more taxa, and
                         ribbon colour follows the threat category.
                         Hover over a ribbon to inspect its complete pathway.
@@ -253,6 +252,62 @@
 
             </div>
 
+            <!--
+                Chart 7 follows the UpSet chart in section 03 of the plan.
+                The chart heading and counts are calculated from the CSV.
+            -->
+            <div class="chart-container chart7-container">
+
+                <div class="chart-heading">
+                    <h3>Most listed insects have a single jurisdiction association</h3>
+
+                    <p>
+                        The previous chart separates taxa by the number of listed
+                        jurisdictions. This chart reveals the exact combinations:
+                        which states or territories are listed together?
+                    </p>
+
+                    <p>
+                        Read each column vertically. Its bar counts the taxa
+                        associated with exactly the combination shown below.
+                        Teal dots identify included jurisdictions; pale dots
+                        identify jurisdictions outside that combination.
+                        A line joins included dots when there is more than one.
+                    </p>
+
+                    <p>
+                        Hover over a bar or dot to highlight its column and see
+                        the combination, count and scientific names.
+                    </p>
+                </div>
+
+                <div
+                    id="chart7"
+                    style="width: 100%; min-width: 0;"
+                    aria-label="UpSet chart showing exact state and territory combinations for nationally listed insect taxa"
+                ></div>
+
+                <p class="chart-note">
+                    Each taxon contributes to one column only. For example,
+                    a column joining NSW and QLD contains taxa associated with
+                    both jurisdictions and no others in this extract.
+                    Jurisdiction associations describe the source listing;
+                    they do not measure abundance, range area or movement,
+                    or establish that a taxon occurs nowhere else.
+                </p>
+
+                <p class="chart-note">
+                    NSW = New South Wales; VIC = Victoria; QLD = Queensland;
+                    SA = South Australia; WA = Western Australia;
+                    TAS = Tasmania; NT = Northern Territory;
+                    ACT = Australian Capital Territory;
+                    OT = Other Territories.
+                    Rows containing only pale dots have no associations
+                    among the listed taxa in this extract.
+                </p>
+
+            </div>
+
             <p class="source-note">
                 Conservation data:
 
@@ -262,8 +317,21 @@
                     rel="noopener noreferrer"
                 >DCCEEW — EPBC Act Threatened Species State Lists</a>.
 
-                The source date is shown above each conservation chart. Insect order is
-                derived from the family classification in the supplied dataset.
+                The source date is shown above each conservation chart.
+                Insect order is derived from the family classification
+                in the supplied dataset.
+            </p>
+
+            <p class="source-note">
+                Jurisdiction names and codes:
+
+                <a
+                    href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-4-july-2026-june-2031/access-and-downloads/digital-boundary-files"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >Australian Bureau of Statistics — ASGS Edition 4</a>.
+
+                The supplied jurisdiction-code file provides the matrix rows.
             </p>
 
         </section>

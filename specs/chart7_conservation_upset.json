@@ -1,0 +1,521 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "UpSet chart of exact jurisdiction combinations for nationally listed insect taxa. All counts, membership and annotations are calculated from CSV data.",
+  "width": 900,
+  "height": 580,
+  "padding": {
+    "left": 58,
+    "right": 12,
+    "top": 12,
+    "bottom": 12
+  },
+  "autosize": {
+    "type": "fit-x",
+    "contains": "padding",
+    "resize": true
+  },
+  "background": "#ffffff",
+  "config": {
+    "font": "Source Sans 3",
+    "axis": {
+      "labelFont": "Source Sans 3",
+      "labelFontSize": 12,
+      "labelColor": "#555555",
+      "titleFont": "Source Sans 3",
+      "titleFontSize": 13,
+      "titleFontWeight": 600,
+      "titleColor": "#444444",
+      "domain": false,
+      "tickColor": "#cccccc"
+    }
+  },
+  "signals": [
+    {
+      "name": "barTop",
+      "update": "width < 400 ? 115 : 90"
+    },
+    {
+      "name": "barBottom",
+      "update": "height - 300"
+    },
+    {
+      "name": "matrixTop",
+      "update": "barBottom + 65"
+    },
+    {
+      "name": "hoverCombination",
+      "value": null,
+      "on": [
+        {
+          "events": "@intersectionBar:mouseover, @membershipDot:mouseover",
+          "update": "datum.jurisdictions"
+        },
+        {
+          "events": "@intersectionBar:mouseout, @membershipDot:mouseout",
+          "update": "null"
+        }
+      ]
+    }
+  ],
+  "data": [
+    {
+      "name": "taxa",
+      "url": "data/dcceew_threatened_insects_with_order_2026.csv",
+      "format": {
+        "type": "csv",
+        "delimiter": ","
+      },
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum.scientific_name) && trim(datum.scientific_name) !== '' && isValid(datum.jurisdictions) && trim(datum.jurisdictions) !== ''"
+        },
+        {
+          "type": "formula",
+          "expr": "split(datum.jurisdictions, '|')",
+          "as": "members"
+        },
+        {
+          "type": "formula",
+          "expr": "length(datum.members)",
+          "as": "jurisdiction_count"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.jurisdiction_count === 1 ? 1 : 0",
+          "as": "single_jurisdiction"
+        }
+      ]
+    },
+    {
+      "name": "summary",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": [null, "single_jurisdiction", "source_extract_date"],
+          "ops": ["count", "sum", "max"],
+          "as": ["total_taxa", "single_taxa", "source_date"]
+        }
+      ]
+    },
+    {
+      "name": "states",
+      "url": "data/abs_state_codes_2026.csv",
+      "format": {
+        "type": "csv",
+        "delimiter": ","
+      },
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toNumber(isValid(datum.state_code_2026) ? datum.state_code_2026 : datum['\\uFEFFstate_code_2026'])",
+          "as": "state_code_2026"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": "state_code_2026",
+            "order": "ascending"
+          }
+        },
+        {
+          "type": "window",
+          "sort": {
+            "field": "state_code_2026",
+            "order": "ascending"
+          },
+          "ops": ["row_number"],
+          "as": ["row_number"]
+        },
+        {
+          "type": "formula",
+          "expr": "datum.row_number - 1",
+          "as": "state_index"
+        }
+      ]
+    },
+    {
+      "name": "combinations",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["jurisdictions"],
+          "fields": [null, "scientific_name"],
+          "ops": ["count", "values"],
+          "as": ["taxon_count", "taxa"]
+        },
+        {
+          "type": "formula",
+          "expr": "split(datum.jurisdictions, '|')",
+          "as": "members"
+        },
+        {
+          "type": "formula",
+          "expr": "join(datum.members, ' + ')",
+          "as": "combination_label"
+        },
+        {
+          "type": "formula",
+          "expr": "length(datum.members)",
+          "as": "jurisdiction_count"
+        },
+        {
+          "type": "formula",
+          "expr": "join(pluck(datum.taxa, 'scientific_name'), '; ')",
+          "as": "taxon_names"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": ["taxon_count", "jurisdictions"],
+            "order": ["descending", "ascending"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "matrix",
+      "source": "combinations",
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "pluck(data('states'), 'state_abbreviation')",
+          "as": "state_list"
+        },
+        {
+          "type": "flatten",
+          "fields": ["state_list"],
+          "as": ["state"]
+        },
+        {
+          "type": "lookup",
+          "from": "states",
+          "key": "state_abbreviation",
+          "fields": ["state"],
+          "values": ["state_index", "state_name_2026"],
+          "as": ["state_index", "state_name"]
+        },
+        {
+          "type": "formula",
+          "expr": "indexof(datum.members, datum.state) >= 0",
+          "as": "included"
+        }
+      ]
+    },
+    {
+      "name": "connectors",
+      "source": "matrix",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.included"
+        },
+        {
+          "type": "aggregate",
+          "groupby": ["jurisdictions", "jurisdiction_count"],
+          "fields": ["state_index", "state_index"],
+          "ops": ["min", "max"],
+          "as": ["first_index", "last_index"]
+        },
+        {
+          "type": "filter",
+          "expr": "datum.jurisdiction_count > 1"
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "columns",
+      "type": "band",
+      "domain": {
+        "data": "combinations",
+        "field": "jurisdictions"
+      },
+      "range": [
+        0,
+        {"signal": "width"}
+      ],
+      "paddingInner": 0.36,
+      "paddingOuter": 0.18
+    },
+    {
+      "name": "counts",
+      "type": "linear",
+      "domain": {
+        "data": "combinations",
+        "field": "taxon_count"
+      },
+      "range": [
+        {"signal": "barBottom"},
+        {"signal": "barTop"}
+      ],
+      "zero": true,
+      "nice": true
+    },
+    {
+      "name": "rows",
+      "type": "band",
+      "domain": {
+        "data": "states",
+        "field": "state_abbreviation"
+      },
+      "range": [
+        {"signal": "matrixTop"},
+        {"signal": "height - 16"}
+      ],
+      "paddingInner": 0.15,
+      "paddingOuter": 0.1
+    }
+  ],
+  "axes": [
+    {
+      "orient": "left",
+      "scale": "counts",
+      "title": "Listed taxa",
+      "titlePadding": 12,
+      "tickCount": 5,
+      "tickMinStep": 1,
+      "format": "d",
+      "grid": true,
+      "gridColor": "#eeeeee",
+      "gridWidth": 1,
+      "labelPadding": 6,
+      "zindex": 0
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "from": {"data": "summary"},
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "y": {"value": 0},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 19},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "lineHeight": {"value": 19}
+        },
+        "update": {
+          "text": {
+            "signal": "width < 500 ? [datum.single_taxa + ' of ' + datum.total_taxa + ' taxa', 'have one jurisdiction'] : datum.single_taxa + ' of ' + datum.total_taxa + ' taxa have one listed jurisdiction'"
+          },
+          "fontSize": {
+            "signal": "width < 320 ? 10 : width < 500 ? 14 : 19"
+          },
+          "limit": {"signal": "width"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "summary"},
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"},
+          "lineHeight": {"value": 14}
+        },
+        "update": {
+          "text": {
+            "signal": "width < 400 ? ['EPBC Act extract:', datum.source_date] : 'EPBC Act extract: ' + datum.source_date"
+          },
+          "y": {"signal": "width < 500 ? 48 : 29"},
+          "fontSize": {"signal": "width < 400 ? 10 : 12"},
+          "limit": {"signal": "width"}
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "name": "intersectionBar",
+      "from": {"data": "combinations"},
+      "encode": {
+        "enter": {
+          "cursor": {"value": "pointer"}
+        },
+        "update": {
+          "x": {"scale": "columns", "field": "jurisdictions"},
+          "width": {"scale": "columns", "band": 1},
+          "y": {"scale": "counts", "field": "taxon_count"},
+          "y2": {"signal": "barBottom"},
+          "fill": {"value": "#178f83"},
+          "opacity": {
+            "signal": "hoverCombination === null || hoverCombination === datum.jurisdictions ? 1 : 0.3"
+          },
+          "tooltip": {
+            "signal": "{'Exact combination': datum.combination_label, 'Listed taxa': datum.taxon_count, 'Number of jurisdictions': datum.jurisdiction_count, 'Scientific names': datum.taxon_names}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "combinations"},
+      "encode": {
+        "enter": {
+          "align": {"value": "center"},
+          "baseline": {"value": "bottom"},
+          "fontSize": {"value": 14},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"}
+        },
+        "update": {
+          "x": {
+            "scale": "columns",
+            "field": "jurisdictions",
+            "band": 0.5
+          },
+          "y": {
+            "scale": "counts",
+            "field": "taxon_count",
+            "offset": -7
+          },
+          "text": {"field": "taxon_count"},
+          "opacity": {
+            "signal": "hoverCombination === null || hoverCombination === datum.jurisdictions ? 1 : 0.3"
+          }
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "x2": {"signal": "width"},
+          "y": {"signal": "barBottom"},
+          "stroke": {"value": "#cccccc"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": 600},
+          "fill": {"value": "#555555"},
+          "lineHeight": {"value": 15}
+        },
+        "update": {
+          "y": {"signal": "barBottom + 20"},
+          "text": {
+            "signal": "width < 400 ? ['Each column shows one', 'exact combination'] : 'Each column represents one exact combination'"
+          },
+          "fontSize": {"signal": "width < 400 ? 10 : 12"},
+          "limit": {"signal": "width"}
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "from": {"data": "states"},
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "width": {"signal": "width"},
+          "y": {"scale": "rows", "field": "state_abbreviation"},
+          "height": {"scale": "rows", "band": 1},
+          "fill": {
+            "signal": "datum.state_index % 2 === 0 ? '#f5f7f5' : '#ffffff'"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "states"},
+      "encode": {
+        "enter": {
+          "x": {"value": -10},
+          "align": {"value": "right"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": 600},
+          "fill": {"value": "#444444"}
+        },
+        "update": {
+          "y": {
+            "scale": "rows",
+            "field": "state_abbreviation",
+            "band": 0.5
+          },
+          "text": {"field": "state_abbreviation"},
+          "tooltip": {"signal": "datum.state_name_2026"}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {"data": "connectors"},
+      "encode": {
+        "enter": {
+          "stroke": {"value": "#178f83"},
+          "strokeWidth": {"value": 2.5}
+        },
+        "update": {
+          "x": {
+            "scale": "columns",
+            "field": "jurisdictions",
+            "band": 0.5
+          },
+          "y": {
+            "signal": "scale('rows', data('states')[datum.first_index].state_abbreviation) + bandwidth('rows') / 2"
+          },
+          "y2": {
+            "signal": "scale('rows', data('states')[datum.last_index].state_abbreviation) + bandwidth('rows') / 2"
+          },
+          "opacity": {
+            "signal": "hoverCombination === null || hoverCombination === datum.jurisdictions ? 1 : 0.2"
+          }
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "name": "membershipDot",
+      "from": {"data": "matrix"},
+      "encode": {
+        "enter": {
+          "shape": {"value": "circle"},
+          "cursor": {"value": "pointer"}
+        },
+        "update": {
+          "x": {
+            "scale": "columns",
+            "field": "jurisdictions",
+            "band": 0.5
+          },
+          "y": {
+            "scale": "rows",
+            "field": "state",
+            "band": 0.5
+          },
+          "size": {"signal": "width < 450 ? 60 : 110"},
+          "fill": {
+            "signal": "datum.included ? '#178f83' : '#dce2de'"
+          },
+          "stroke": {
+            "signal": "datum.included ? '#ffffff' : '#dce2de'"
+          },
+          "strokeWidth": {"value": 1},
+          "opacity": {
+            "signal": "hoverCombination === null || hoverCombination === datum.jurisdictions ? 1 : 0.3"
+          },
+          "tooltip": {
+            "signal": "{'Exact combination': datum.combination_label, 'Listed taxa': datum.taxon_count, 'Jurisdiction': datum.state_name, 'Included in this combination': datum.included ? 'Yes' : 'No', 'Scientific names': datum.taxon_names}"
+          }
+        }
+      }
+    }
+  ]
+}
