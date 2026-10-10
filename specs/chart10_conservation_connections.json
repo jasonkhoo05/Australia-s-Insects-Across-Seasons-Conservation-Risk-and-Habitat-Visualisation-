@@ -1,0 +1,695 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Chart 10: connection map for nationally listed insect taxa associated with multiple jurisdictions. Every curve joins a pair of jurisdiction associations for the same taxon; it does not represent migration, a route or a connected geographic range. Counts, names, categories and connections come from CSV files. Node positions come from ABS boundary centroids, with an ACT locator offset for legibility.",
+  "width": 956,
+  "height": 650,
+  "padding": 12,
+  "autosize": {"type": "none", "contains": "padding", "resize": true},
+  "background": "#ffffff",
+  "config": {"text": {"font": "Source Sans 3, sans-serif", "fill": "#252525"}},
+  "signals": [
+    {"name": "compact", "update": "width < 800"},
+    {"name": "mapWidth", "update": "compact ? width : width * 0.62"},
+    {"name": "mapBottom", "update": "compact ? max(300, min(460, width * 0.75 + 100)) : height - 88"},
+    {"name": "panelX", "update": "compact ? 10 : mapWidth + 18"},
+    {"name": "panelY", "update": "compact ? mapBottom + 24 : 108"},
+    {"name": "panelWidth", "update": "compact ? width - 20 : width - panelX - 10"},
+    {"name": "cardHeight", "value": 116},
+    {
+      "name": "selectedTaxon",
+      "value": null,
+      "on": [
+        {
+          "events": "@taxonCards:click",
+          "update": "selectedTaxon === datum.taxon_id ? null : datum.taxon_id"
+        },
+        {
+          "events": "@connections:click",
+          "update": "selectedTaxon === datum.a.taxon_id ? null : datum.a.taxon_id"
+        },
+        {
+          "events": "dblclick",
+          "update": "null"
+        }
+      ]
+    },
+    {
+      "name": "hoverTaxon",
+      "value": null,
+      "on": [
+        {
+          "events": "@taxonCards:mouseover",
+          "update": "datum.taxon_id"
+        },
+        {
+          "events": "@connections:mouseover",
+          "update": "datum.a.taxon_id"
+        },
+        {
+          "events": "@taxonCards:mouseout, @connections:mouseout",
+          "update": "null"
+        }
+      ]
+    },
+    {"name": "activeTaxon", "update": "selectedTaxon || hoverTaxon"},
+    {"name": "multiCount", "update": "length(data('multi_taxa'))"},
+    {"name": "taxonCount", "update": "length(data('taxa'))"},
+    {
+      "name": "snapshotText",
+      "update": "length(data('snapshot')) ? 'DCCEEW extract · ' + timeFormat(timeParse(data('snapshot')[0].extract_date, '%Y-%m-%d'), '%e %B %Y') : 'DCCEEW listing extract'"
+    }
+  ],
+  "data": [
+    {
+      "name": "associations",
+      "url": "data/combined_threatened_insects_by_state_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toString(isValid(datum.taxon_id) ? datum.taxon_id : datum['\uFEFFtaxon_id'])",
+          "as": "taxon_id"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.taxon_id !== '' && isValid(datum.state_abbreviation) && datum.state_abbreviation !== ''"
+        }
+      ]
+    },
+    {
+      "name": "snapshot",
+      "source": "associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": ["dcceew_extract_date"],
+          "ops": ["min"],
+          "as": ["extract_date"]
+        }
+      ]
+    },
+    {
+      "name": "unique_associations",
+      "source": "associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "taxon_id",
+            "scientific_name",
+            "common_name",
+            "epbc_status_code",
+            "epbc_status",
+            "state_abbreviation"
+          ]
+        },
+        {
+          "type": "collect",
+          "sort": {"field": ["taxon_id", "state_abbreviation"]}
+        }
+      ]
+    },
+    {
+      "name": "taxa",
+      "source": "unique_associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "taxon_id",
+            "scientific_name",
+            "common_name",
+            "epbc_status_code",
+            "epbc_status"
+          ],
+          "fields": [null, "state_abbreviation"],
+          "ops": ["count", "values"],
+          "as": ["jurisdiction_count", "association_rows"]
+        },
+        {
+          "type": "formula",
+          "expr": "join(pluck(datum.association_rows, 'state_abbreviation'), ' · ')",
+          "as": "jurisdiction_text"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.common_name || datum.scientific_name",
+          "as": "display_name"
+        }
+      ]
+    },
+    {
+      "name": "multi_taxa",
+      "source": "taxa",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.jurisdiction_count > 1"
+        },
+        {
+          "type": "collect",
+          "sort": {"field": "display_name"}
+        },
+        {
+          "type": "window",
+          "ops": ["row_number"],
+          "as": ["rank"]
+        },
+        {
+          "type": "formula",
+          "expr": "split(trim(replace(datum.display_name, /(.{1,22})(?:\\s+|$)/g, '$1\\n')), '\\n')",
+          "as": "name_lines"
+        },
+        {
+          "type": "formula",
+          "expr": "{'Listed taxon': datum.display_name, 'Scientific name': datum.scientific_name, 'National threat category': datum.epbc_status, 'Listed jurisdictions': datum.jurisdiction_text, 'Number of jurisdictions': datum.jurisdiction_count}",
+          "as": "details"
+        }
+      ]
+    },
+    {
+      "name": "multi_associations",
+      "source": "unique_associations",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "multi_taxa",
+          "key": "taxon_id",
+          "fields": ["taxon_id"],
+          "values": [
+            "rank",
+            "jurisdiction_count",
+            "jurisdiction_text",
+            "display_name"
+          ],
+          "as": [
+            "rank",
+            "jurisdiction_count",
+            "jurisdiction_text",
+            "display_name"
+          ]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.rank)"
+        }
+      ]
+    },
+    {
+      "name": "state_totals",
+      "source": "multi_associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["state_abbreviation"],
+          "ops": ["count"],
+          "as": ["multi_total"]
+        }
+      ]
+    },
+    {
+      "name": "jurisdictions",
+      "url": "data/abs_state_codes_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toString(isValid(datum.state_code_2026) ? datum.state_code_2026 : datum['\uFEFFstate_code_2026'])",
+          "as": "state_code_2026"
+        }
+      ]
+    },
+    {
+      "name": "map",
+      "url": "data/australia_states_2026.geojson",
+      "format": {"type": "json", "property": "features"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toString(datum.properties.state_code_2026)",
+          "as": "code"
+        },
+        {
+          "type": "lookup",
+          "from": "jurisdictions",
+          "key": "state_code_2026",
+          "fields": ["code"],
+          "values": ["state_abbreviation", "state_name_2026"],
+          "as": ["state_abbreviation", "state_name_2026"]
+        },
+        {
+          "type": "lookup",
+          "from": "state_totals",
+          "key": "state_abbreviation",
+          "fields": ["state_abbreviation"],
+          "values": ["multi_total"],
+          "as": ["multi_total"],
+          "default": 0
+        }
+      ]
+    },
+    {
+      "name": "nodes",
+      "source": "map",
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "geoCentroid('australia', datum)",
+          "as": "centroid"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.centroid[0]",
+          "as": "cx"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.centroid[1]",
+          "as": "cy"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.cx + (datum.state_abbreviation === 'ACT' ? (compact ? 32 : 52) : 0)",
+          "as": "x"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.cy + (datum.state_abbreviation === 'ACT' ? 8 : 0)",
+          "as": "y"
+        },
+        {
+          "type": "formula",
+          "expr": "{'State or territory': datum.state_name_2026, 'Multi-jurisdiction listed taxa': datum.multi_total, 'Interpretation': 'Shared listing associations, not migration or population size'}",
+          "as": "details"
+        }
+      ]
+    },
+    {
+      "name": "act_locator",
+      "source": "nodes",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.state_abbreviation === 'ACT'"
+        }
+      ]
+    },
+    {
+      "name": "endpoints",
+      "source": "multi_associations",
+      "transform": [
+        {
+          "type": "lookup",
+          "from": "nodes",
+          "key": "state_abbreviation",
+          "fields": ["state_abbreviation"],
+          "values": ["x", "y", "state_name_2026"],
+          "as": ["x", "y", "state_name_2026"]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.x) && isValid(datum.y)"
+        }
+      ]
+    },
+    {
+      "name": "links",
+      "source": "endpoints",
+      "transform": [
+        {
+          "type": "cross",
+          "filter": "datum.a.taxon_id === datum.b.taxon_id && datum.a.state_abbreviation < datum.b.state_abbreviation"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.b.x - datum.a.x",
+          "as": "dx"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.b.y - datum.a.y",
+          "as": "dy"
+        },
+        {
+          "type": "formula",
+          "expr": "max(1, sqrt(datum.dx * datum.dx + datum.dy * datum.dy))",
+          "as": "distance"
+        },
+        {
+          "type": "formula",
+          "expr": "(datum.a.rank - (multiCount + 1) / 2) * (compact ? 16 : 24)",
+          "as": "bend"
+        },
+        {
+          "type": "formula",
+          "expr": "(datum.a.x + datum.b.x) / 2 - datum.dy / datum.distance * datum.bend",
+          "as": "qx"
+        },
+        {
+          "type": "formula",
+          "expr": "(datum.a.y + datum.b.y) / 2 + datum.dx / datum.distance * datum.bend",
+          "as": "qy"
+        },
+        {
+          "type": "formula",
+          "expr": "'M' + datum.a.x + ',' + datum.a.y + ' Q' + datum.qx + ',' + datum.qy + ' ' + datum.b.x + ',' + datum.b.y",
+          "as": "path"
+        },
+        {
+          "type": "formula",
+          "expr": "{'Listed taxon': datum.a.display_name, 'Scientific name': datum.a.scientific_name, 'National threat category': datum.a.epbc_status, 'This connection': datum.a.state_name_2026 + ' ↔ ' + datum.b.state_name_2026, 'All listed jurisdictions': datum.a.jurisdiction_text, 'Meaning': 'Both jurisdictions are associated with this taxon; this is not a migration route'}",
+          "as": "details"
+        }
+      ]
+    },
+    {
+      "name": "visible_links",
+      "source": "links",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!selectedTaxon || datum.a.taxon_id === selectedTaxon"
+        }
+      ]
+    },
+    {
+      "name": "active_states",
+      "source": "multi_associations",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "!activeTaxon || datum.taxon_id === activeTaxon"
+        },
+        {
+          "type": "aggregate",
+          "groupby": ["state_abbreviation"]
+        }
+      ]
+    }
+  ],
+  "projections": [
+    {
+      "name": "australia",
+      "type": "albers",
+      "rotate": [-134, 0, 0],
+      "center": [0, -27],
+      "parallels": [-18, -36],
+      "fit": {"signal": "data('map')"},
+      "extent": {
+        "signal": "[[18, 94], [mapWidth - (compact ? 42 : 66), mapBottom - 24]]"
+      }
+    }
+  ],
+  "scales": [
+    {
+      "name": "taxonColour",
+      "type": "ordinal",
+      "domain": {"data": "multi_taxa", "field": "taxon_id"},
+      "range": ["#147d72", "#7662a6", "#2474a5", "#c27616"]
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"value": 16},
+          "text": {"signal": "snapshotText"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"value": 44},
+          "text": {
+            "signal": "compact ? [multiCount + ' of ' + taxonCount + ' listed insect taxa', 'are associated with multiple jurisdictions'] : multiCount + ' of ' + taxonCount + ' listed insect taxa are associated with multiple jurisdictions'"
+          },
+          "fontSize": {"value": 13},
+          "fontWeight": {"value": 700},
+          "lineHeight": {"value": 18},
+          "fill": {"value": "#147a70"}
+        }
+      }
+    },
+    {
+      "type": "shape",
+      "from": {"data": "map"},
+      "interactive": false,
+      "transform": [
+        {
+          "type": "geoshape",
+          "projection": "australia"
+        }
+      ],
+      "encode": {
+        "update": {
+          "fill": {
+            "signal": "indata('active_states', 'state_abbreviation', datum.state_abbreviation) ? '#e4eeea' : '#f0f2ed'"
+          },
+          "stroke": {"value": "#ffffff"},
+          "strokeWidth": {"value": 1.2}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {"data": "act_locator"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"field": "cx"},
+          "y": {"field": "cy"},
+          "x2": {"field": "x"},
+          "y2": {"field": "y"},
+          "stroke": {"value": "#87918b"},
+          "strokeDash": {"value": [3, 3]},
+          "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "name": "connections",
+      "type": "path",
+      "from": {"data": "visible_links"},
+      "encode": {
+        "update": {
+          "path": {"field": "path"},
+          "fill": {"value": null},
+          "stroke": {"scale": "taxonColour", "field": "a.taxon_id"},
+          "strokeWidth": {"value": 2.6},
+          "strokeOpacity": {
+            "signal": "!activeTaxon || datum.a.taxon_id === activeTaxon ? 0.9 : 0.12"
+          },
+          "strokeCap": {"value": "round"},
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "from": {"data": "act_locator"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"field": "cx"},
+          "y": {"field": "cy"},
+          "size": {"value": 18},
+          "fill": {"value": "#596760"}
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "from": {"data": "nodes"},
+      "encode": {
+        "update": {
+          "x": {"field": "x"},
+          "y": {"field": "y"},
+          "size": {"value": 70},
+          "fill": {
+            "signal": "indata('active_states', 'state_abbreviation', datum.state_abbreviation) ? '#334d45' : '#ffffff'"
+          },
+          "stroke": {
+            "signal": "indata('active_states', 'state_abbreviation', datum.state_abbreviation) ? '#ffffff' : '#bbc4bc'"
+          },
+          "strokeWidth": {"value": 1.5},
+          "tooltip": {"field": "details"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "nodes"},
+      "encode": {
+        "update": {
+          "x": {"field": "x"},
+          "y": {"field": "y"},
+          "dx": {
+            "signal": "datum.state_abbreviation === 'ACT' ? 12 : datum.state_abbreviation === 'VIC' ? -12 : 0"
+          },
+          "dy": {
+            "signal": "datum.state_abbreviation === 'ACT' ? 0 : datum.state_abbreviation === 'VIC' ? 18 : datum.state_abbreviation === 'TAS' ? 16 : -16"
+          },
+          "text": {"field": "state_abbreviation"},
+          "align": {
+            "signal": "datum.state_abbreviation === 'ACT' ? 'left' : 'center'"
+          },
+          "baseline": {"value": "middle"},
+          "fontSize": {"signal": "compact ? 11 : 13"},
+          "fontWeight": {"value": 700},
+          "fill": {
+            "signal": "indata('active_states', 'state_abbreviation', datum.state_abbreviation) ? '#334d45' : '#78847b'"
+          },
+          "tooltip": {"field": "details"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX"},
+          "y": {"signal": "panelY - 16"},
+          "text": {
+            "signal": "selectedTaxon ? 'Click selected card to show all' : 'Click a taxon to trace it'"
+          },
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"}
+        }
+      }
+    },
+    {
+      "name": "taxonCards",
+      "type": "rect",
+      "from": {"data": "multi_taxa"},
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight"},
+          "width": {"signal": "panelWidth"},
+          "height": {"signal": "cardHeight - 10"},
+          "cornerRadius": {"value": 5},
+          "fill": {
+            "signal": "selectedTaxon === datum.taxon_id ? '#f0f5f1' : '#fafbf8'"
+          },
+          "stroke": {
+            "signal": "activeTaxon === datum.taxon_id ? scale('taxonColour', datum.taxon_id) : '#e1e5df'"
+          },
+          "strokeWidth": {
+            "signal": "activeTaxon === datum.taxon_id ? 2 : 1"
+          },
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {"data": "multi_taxa"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX + 12"},
+          "x2": {"signal": "panelX + 32"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight + 20"},
+          "stroke": {"scale": "taxonColour", "field": "taxon_id"},
+          "strokeWidth": {"value": 3}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "multi_taxa"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX + 40"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight + 13"},
+          "text": {"field": "name_lines"},
+          "baseline": {"value": "top"},
+          "fontSize": {"signal": "panelWidth < 310 ? 12 : 13"},
+          "lineHeight": {"value": 16},
+          "fontWeight": {"value": 700}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "multi_taxa"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX + 12"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight + 54"},
+          "text": {"field": "scientific_name"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 11},
+          "fontStyle": {"value": "italic"},
+          "fill": {"value": "#666666"},
+          "limit": {"signal": "panelWidth - 24"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "multi_taxa"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX + 12"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight + 76"},
+          "text": {"field": "jurisdiction_text"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": 600},
+          "fill": {"scale": "taxonColour", "field": "taxon_id"},
+          "limit": {"signal": "panelWidth - 24"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "multi_taxa"},
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX + 12"},
+          "y": {"signal": "panelY + (datum.rank - 1) * cardHeight + 96"},
+          "text": {
+            "signal": "datum.epbc_status_code + ' · ' + datum.jurisdiction_count + ' jurisdictions'"
+          },
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 11},
+          "fill": {"value": "#666666"},
+          "limit": {"signal": "panelWidth - 24"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"signal": "height - 30"},
+          "text": {
+            "signal": "compact ? ['Line colour identifies a taxon; every pair of its listed', 'jurisdictions is joined. Curves are not migration routes.'] : 'Line colour identifies a taxon; every pair of its listed jurisdictions is joined. Curves are not migration routes.'"
+          },
+          "fontSize": {"value": 11},
+          "lineHeight": {"value": 16},
+          "fill": {"value": "#666666"}
+        }
+      }
+    }
+  ]
+}

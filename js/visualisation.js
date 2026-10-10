@@ -201,6 +201,7 @@ function wrapText(text, maxWidth, font) {
 
 async function mountChart(id, path) {
     const element = document.getElementById(id);
+    const isMap = ["chart8", "chart9", "chart10"].includes(id);
     const response = await fetch(path);
 
     if (!response.ok) {
@@ -209,7 +210,7 @@ async function mountChart(id, path) {
 
     const original = await response.json();
 
-    if (id === "chart8" || id === "chart9") {
+    if (isMap) {
         element.textContent = "Loading map…";
 
         const mapData = original.data?.find(data => data.name === "map");
@@ -229,6 +230,20 @@ async function mountChart(id, path) {
     let currentEmbed;
     let lastWidth = -1;
     let timer;
+    const taxonControl = id === "chart10"
+        ? document.getElementById("chart10-taxon")
+        : null;
+
+    if (taxonControl) {
+        taxonControl.addEventListener("change", () => {
+            if (currentEmbed) {
+                currentEmbed.view
+                    .signal("selectedTaxon", taxonControl.value || null)
+                    .runAsync()
+                    .catch(error => console.error("Error selecting a taxon:", error));
+            }
+        });
+    }
 
     async function render() {
         const width = Math.floor(element.clientWidth);
@@ -267,8 +282,20 @@ async function mountChart(id, path) {
                 spec.height = width < 600 ? (width < 400 ? 760 : 850) : 650;
             }
 
+            if (id === "chart10") {
+                spec.height = width < 800
+                    ? Math.round(Math.max(300, Math.min(460, width * 0.75 + 100)) + 550)
+                    : 650;
+
+                const selection = spec.signals.find(signal => signal.name === "selectedTaxon");
+
+                if (selection && taxonControl) {
+                    selection.value = taxonControl.value || null;
+                }
+            }
+
             spec.autosize = {
-                type: id === "chart8" || id === "chart9" ? "none" : "fit-x",
+                type: isMap ? "none" : "fit-x",
                 contains: "padding",
                 resize: true
             };
@@ -348,6 +375,22 @@ async function mountChart(id, path) {
         });
 
         currentEmbed = result;
+
+        if (taxonControl) {
+            const selected = result.view.signal("selectedTaxon");
+            const options = [new Option("All taxa", "")];
+
+            for (const taxon of result.view.data("multi_taxa")) {
+                options.push(new Option(taxon.display_name, taxon.taxon_id));
+            }
+
+            taxonControl.replaceChildren(...options);
+            taxonControl.value = selected || "";
+
+            result.view.addSignalListener("selectedTaxon", (name, value) => {
+                taxonControl.value = value || "";
+            });
+        }
     }
 
     await render();
@@ -377,7 +420,8 @@ async function initialiseCharts() {
         ["chart6", "specs/chart6_conservation_alluvial.json"],
         ["chart7", "specs/chart7_conservation_upset.json"],
         ["chart8", "specs/chart8_conservation_choropleth.json"],
-        ["chart9", "specs/chart9_conservation_symbols.json"]
+        ["chart9", "specs/chart9_conservation_symbols.json"],
+        ["chart10", "specs/chart10_conservation_connections.json"]
     ];
 
     await Promise.all(
@@ -390,8 +434,8 @@ async function initialiseCharts() {
                 const element = document.getElementById(id);
 
                 if (element) {
-                    element.textContent = id === "chart8" || id === "chart9"
-                        ? `${id === "chart8" ? "Chart 8" : "Chart 9"} could not load: ${error.message}`
+                    element.textContent = ["chart8", "chart9", "chart10"].includes(id)
+                        ? `${id.replace("chart", "Chart ")} could not load: ${error.message}`
                         : "This chart could not load. Check the JSON and CSV paths.";
                 }
             }

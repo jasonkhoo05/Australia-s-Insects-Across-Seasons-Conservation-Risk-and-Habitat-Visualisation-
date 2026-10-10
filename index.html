@@ -450,6 +450,69 @@
 
             </div>
 
+            <!-- Chart 10 is the connection map in section 04 of the plan. -->
+            <div class="chart-container chart10-container">
+
+                <div class="chart-heading">
+                    <h3>Which listed insects connect multiple jurisdictions?</h3>
+
+                    <p>
+                        The previous maps compare jurisdictions. This map follows
+                        individual listed insects associated with more than one
+                        state or territory. Each colour identifies one taxon,
+                        and each curve joins two jurisdictions listed for it.
+                    </p>
+
+                    <p>
+                        Choose a taxon below, or click its card, to isolate its
+                        connections. Click the selected card again or choose
+                        All taxa to restore the complete view. Hover over a
+                        curve or card for details.
+                    </p>
+
+                    <p>
+                        <label for="chart10-taxon">Trace a listed taxon: </label>
+                        <select id="chart10-taxon">
+                            <option value="">All taxa</option>
+                        </select>
+                    </p>
+                </div>
+
+                <div
+                    id="chart10"
+                    style="width: 100%; min-width: 0;"
+                    aria-label="Connection map showing shared state and territory associations for nationally listed insect taxa associated with multiple jurisdictions"
+                ></div>
+
+                <p class="chart-note">
+                    Every pair of jurisdictions listed for the same taxon is
+                    joined. Several curves can therefore represent one taxon;
+                    counting curves does not give the number of listed insects.
+                    Line colour identifies the taxon. All curves have the same
+                    width, and their curvature separates overlapping connections.
+                </p>
+
+                <p class="chart-note">
+                    These are shared listing associations, not migration routes,
+                    movement, abundance or evidence of a continuous geographic
+                    range. Endpoint dots summarise jurisdictions rather than
+                    insect observation locations. Pale regions and hollow dots
+                    have no multi-jurisdiction listed taxa in this extract;
+                    they may still have taxa associated with one jurisdiction.
+                </p>
+
+                <p class="chart-note">
+                    The map uses an equal-area Albers projection and shows
+                    mainland Australia and Tasmania. Offshore islands and Other
+                    Territories are omitted at this scale. ACT's endpoint is
+                    moved for readability; its thin grey dashed locator line
+                    is separate from the coloured taxon connections.
+                    A taxon is a listed species or subspecies.
+                    CR = Critically Endangered; EN = Endangered; VU = Vulnerable.
+                </p>
+
+            </div>
+
             <p class="source-note">
                 Listing data:
                 <a
