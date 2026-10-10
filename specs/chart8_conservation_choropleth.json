@@ -1,0 +1,319 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Chart 8: equal-area choropleth of the Critically Endangered share of nationally listed insect taxa associated with each jurisdiction. Counts and annotations are derived from CSV data; geometry is from ABS ASGS Edition 4.",
+  "width": 956,
+  "height": 610,
+  "padding": 12,
+  "autosize": {"type": "none", "contains": "padding", "resize": true},
+  "background": "#ffffff",
+  "config": {"text": {"font": "Source Sans 3, sans-serif", "fill": "#252525"}},
+  "signals": [
+    {"name": "compact", "update": "width < 576"},
+    {"name": "mapWidth", "update": "compact ? width : width * 0.68"},
+    {"name": "mapBottom", "update": "compact ? min(440, max(340, width * 0.72 + 80)) : height - 100"},
+    {"name": "panelX", "update": "compact ? 12 : mapWidth + 20"},
+    {"name": "panelY", "update": "compact ? mapBottom + 20 : 116"},
+    {"name": "panelWidth", "update": "compact ? width - 24 : width - mapWidth - 30"},
+    {"name": "legendColumns", "update": "compact ? 3 : 6"},
+    {"name": "legendStep", "update": "(width - 20) / legendColumns"},
+    {"name": "legendY", "update": "height - (compact ? 86 : 46)"},
+    {
+      "name": "hoverState",
+      "value": null,
+      "on": [
+        {
+          "events": "@regions:mouseover, @stateCodes:mouseover, @statePercentages:mouseover, @stateCounts:mouseover, @actLocator:mouseover",
+          "update": "datum"
+        },
+        {
+          "events": "@regions:mouseout, @stateCodes:mouseout, @statePercentages:mouseout, @stateCounts:mouseout, @actLocator:mouseout",
+          "update": "null"
+        }
+      ]
+    },
+    {"name": "highest", "update": "length(data('ranked')) ? data('ranked')[0] : null"},
+    {"name": "focus", "update": "hoverState || highest"},
+    {
+      "name": "snapshotText",
+      "update": "length(data('snapshot')) ? 'DCCEEW extract · ' + timeFormat(timeParse(data('snapshot')[0].extract_date, '%Y-%m-%d'), '%e %B %Y') : 'DCCEEW listing extract'"
+    }
+  ],
+  "data": [
+    {
+      "name": "associations",
+      "url": "data/combined_threatened_insects_by_state_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {"type": "formula", "expr": "isValid(datum.taxon_id) ? datum.taxon_id : datum['\\uFEFFtaxon_id']", "as": "taxon_id"},
+        {"type": "filter", "expr": "isValid(datum.taxon_id) && datum.taxon_id !== '' && isValid(datum.state_abbreviation) && datum.state_abbreviation !== ''"},
+        {"type": "formula", "expr": "datum.epbc_status_code === 'CR' ? 1 : 0", "as": "is_cr"},
+        {"type": "formula", "expr": "datum.epbc_status_code === 'EN' ? 1 : 0", "as": "is_en"},
+        {"type": "formula", "expr": "datum.epbc_status_code === 'VU' ? 1 : 0", "as": "is_vu"}
+      ]
+    },
+    {
+      "name": "snapshot",
+      "source": "associations",
+      "transform": [
+        {"type": "aggregate", "fields": ["dcceew_extract_date"], "ops": ["min"], "as": ["extract_date"]}
+      ]
+    },
+    {
+      "name": "unique_associations",
+      "source": "associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["taxon_id", "state_abbreviation"],
+          "fields": ["is_cr", "is_en", "is_vu"],
+          "ops": ["max", "max", "max"],
+          "as": ["is_cr", "is_en", "is_vu"]
+        }
+      ]
+    },
+    {
+      "name": "totals",
+      "source": "unique_associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["state_abbreviation"],
+          "fields": ["is_cr", "is_en", "is_vu", null],
+          "ops": ["sum", "sum", "sum", "count"],
+          "as": ["cr", "en", "vu", "total"]
+        }
+      ]
+    },
+    {
+      "name": "jurisdictions",
+      "url": "data/abs_state_codes_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {"type": "formula", "expr": "toString(isValid(datum.state_code_2026) ? datum.state_code_2026 : datum['\\uFEFFstate_code_2026'])", "as": "state_code_2026"},
+        {
+          "type": "lookup", "from": "totals", "key": "state_abbreviation",
+          "fields": ["state_abbreviation"], "values": ["cr", "en", "vu", "total"],
+          "as": ["cr", "en", "vu", "total"], "default": 0
+        },
+        {"type": "formula", "expr": "datum.total > 0 ? datum.cr / datum.total : null", "as": "share"},
+        {"type": "formula", "expr": "datum.total > 0 ? format(datum.share, '.1%') : 'No listed taxa'", "as": "percentage_text"}
+      ]
+    },
+    {
+      "name": "ranked",
+      "source": "jurisdictions",
+      "transform": [
+        {"type": "filter", "expr": "datum.total > 0 && datum.state_abbreviation !== 'OT'"},
+        {"type": "collect", "sort": {"field": ["share", "total", "state_abbreviation"], "order": ["descending", "descending", "ascending"]}}
+      ]
+    },
+    {
+      "name": "map",
+      "url": "data/australia_states_2026.geojson",
+      "format": {"type": "json", "property": "features"},
+      "transform": [
+        {"type": "formula", "expr": "toString(datum.properties.state_code_2026)", "as": "code"},
+        {
+          "type": "lookup", "from": "jurisdictions", "key": "state_code_2026",
+          "fields": ["code"],
+          "values": ["state_abbreviation", "state_name_2026", "cr", "en", "vu", "total", "share", "percentage_text"],
+          "as": ["state_abbreviation", "state_name_2026", "cr", "en", "vu", "total", "share", "percentage_text"]
+        },
+        {
+          "type": "formula", "as": "details",
+          "expr": "{'State or territory': datum.state_name_2026, 'Critically Endangered share': datum.total > 0 ? format(datum.share, '.1%') : 'Not applicable: no listed taxa', 'Critically Endangered (CR)': datum.cr, 'Endangered (EN)': datum.en, 'Vulnerable (VU)': datum.vu, 'All listed insect taxa': datum.total}"
+        }
+      ]
+    },
+    {
+      "name": "labels",
+      "source": "map",
+      "transform": [
+        {"type": "formula", "expr": "geoCentroid('australia', datum)", "as": "centroid"},
+        {"type": "formula", "expr": "datum.centroid[0]", "as": "cx"},
+        {"type": "formula", "expr": "datum.centroid[1]", "as": "cy"},
+        {"type": "formula", "expr": "indexof(['ACT', 'VIC', 'TAS'], datum.state_abbreviation) >= 0", "as": "external"},
+        {"type": "formula", "expr": "datum.cx + (datum.state_abbreviation === 'ACT' ? (compact ? 36 : 58) : datum.state_abbreviation === 'VIC' ? (compact ? -32 : -48) : datum.state_abbreviation === 'TAS' ? (compact ? 34 : 56) : 0)", "as": "lx"},
+        {"type": "formula", "expr": "datum.cy + (datum.state_abbreviation === 'ACT' ? (compact ? -6 : 10) : datum.state_abbreviation === 'VIC' ? 24 : datum.state_abbreviation === 'TAS' ? 4 : 0)", "as": "ly"},
+        {"type": "formula", "expr": "!datum.external && datum.total > 0 && datum.share >= 0.6 ? '#ffffff' : '#252525'", "as": "label_fill"}
+      ]
+    },
+    {
+      "name": "callouts",
+      "source": "labels",
+      "transform": [{"type": "filter", "expr": "datum.external"}]
+    },
+    {
+      "name": "act",
+      "source": "labels",
+      "transform": [{"type": "filter", "expr": "datum.state_abbreviation === 'ACT'"}]
+    },
+    {
+      "name": "legend",
+      "transform": [
+        {"type": "sequence", "start": 0, "stop": 6, "as": "index"},
+        {"type": "formula", "expr": "datum.index === 5 ? 'No listed taxa' : datum.index === 4 ? '80–100%' : format(datum.index * 0.2, '.0%') + '–<' + format((datum.index + 1) * 0.2, '.0%')", "as": "label"},
+        {"type": "formula", "expr": "datum.index === 5 ? '#dddddd' : scale('crShare', datum.index * 0.2 + 0.01)", "as": "colour"}
+      ]
+    }
+  ],
+  "projections": [
+    {
+      "name": "australia", "type": "albers",
+      "rotate": [-134, 0, 0], "center": [0, -27], "parallels": [-18, -36],
+      "fit": {"signal": "data('map')"},
+      "extent": {"signal": "[[16, compact ? 108 : 90], [mapWidth - (compact ? 40 : 60), mapBottom - 45]]"}
+    }
+  ],
+  "scales": [
+    {
+      "name": "crShare", "type": "threshold",
+      "domain": [0.2, 0.4, 0.6, 0.8],
+      "range": ["#fff5d9", "#fddc85", "#f6a64b", "#ce5834", "#94231d"]
+    }
+  ],
+  "marks": [
+    {
+      "type": "text", "interactive": false,
+      "encode": {"update": {
+        "x": {"value": 10}, "y": {"value": 16}, "text": {"signal": "snapshotText"},
+        "fontSize": {"value": 12}, "fill": {"value": "#666666"}
+      }}
+    },
+    {
+      "type": "text", "interactive": false,
+      "encode": {"update": {
+        "x": {"value": 10}, "y": {"value": 44},
+        "text": {"signal": "highest ? (compact ? ['Highest CR share: ' + highest.state_name_2026, format(highest.share, '.1%') + ' · ' + highest.cr + ' of ' + highest.total + ' listed taxa'] : 'Highest CR share: ' + highest.state_name_2026 + ' · ' + format(highest.share, '.1%') + ' (' + highest.cr + '/' + highest.total + ')') : 'No listed taxa available'"},
+        "fontSize": {"value": 13}, "fontWeight": {"value": 700},
+        "lineHeight": {"value": 18}, "fill": {"value": "#94231d"}
+      }}
+    },
+    {
+      "name": "regions", "type": "shape", "from": {"data": "map"},
+      "transform": [{"type": "geoshape", "projection": "australia"}],
+      "encode": {"update": {
+        "fill": {"signal": "datum.total > 0 ? scale('crShare', datum.share) : '#dddddd'"},
+        "stroke": {"signal": "hoverState && hoverState.code === datum.code ? '#252525' : '#ffffff'"},
+        "strokeWidth": {"signal": "hoverState && hoverState.code === datum.code ? 2.5 : 1.1"},
+        "cursor": {"value": "pointer"}, "tooltip": {"field": "details"}
+      }}
+    },
+    {
+      "type": "rule", "interactive": false, "from": {"data": "callouts"},
+      "encode": {"update": {
+        "x": {"field": "cx"}, "y": {"field": "cy"},
+        "x2": {"field": "lx"}, "y2": {"signal": "datum.ly - 12"},
+        "stroke": {"value": "#777777"}, "strokeWidth": {"value": 1}
+      }}
+    },
+    {
+      "name": "actLocator", "type": "symbol", "from": {"data": "act"},
+      "encode": {"update": {
+        "x": {"field": "cx"}, "y": {"field": "cy"}, "size": {"value": 45},
+        "fill": {"signal": "datum.total > 0 ? scale('crShare', datum.share) : '#dddddd'"},
+        "stroke": {"value": "#555555"}, "strokeWidth": {"value": 1.2},
+        "cursor": {"value": "pointer"}, "tooltip": {"field": "details"}
+      }}
+    },
+    {
+      "name": "stateCodes", "type": "text", "from": {"data": "labels"},
+      "encode": {"update": {
+        "x": {"field": "lx"}, "y": {"signal": "datum.ly - 13"},
+        "text": {"field": "state_abbreviation"}, "align": {"value": "center"},
+        "fontSize": {"signal": "compact ? 11 : 14"}, "fontWeight": {"value": 700},
+        "fill": {"field": "label_fill"}, "tooltip": {"field": "details"}, "cursor": {"value": "pointer"}
+      }}
+    },
+    {
+      "name": "statePercentages", "type": "text", "from": {"data": "labels"},
+      "encode": {"update": {
+        "x": {"field": "lx"}, "y": {"signal": "datum.ly + 3"},
+        "text": {"signal": "datum.total > 0 ? format(datum.share, '.1%') : ['No listed', 'taxa']"},
+        "align": {"value": "center"}, "lineHeight": {"value": 13},
+        "fontSize": {"signal": "datum.total > 0 ? (compact ? 12 : 16) : 11"},
+        "fontWeight": {"value": 600}, "fill": {"field": "label_fill"},
+        "tooltip": {"field": "details"}, "cursor": {"value": "pointer"}
+      }}
+    },
+    {
+      "name": "stateCounts", "type": "text", "from": {"data": "labels"},
+      "encode": {"update": {
+        "x": {"field": "lx"}, "y": {"signal": "datum.ly + 20"},
+        "text": {"signal": "datum.total > 0 ? '(' + datum.cr + '/' + datum.total + ')' : ''"},
+        "align": {"value": "center"}, "fontSize": {"value": 12},
+        "opacity": {"signal": "compact ? 0 : 1"}, "fill": {"field": "label_fill"},
+        "tooltip": {"field": "details"}, "cursor": {"value": "pointer"}
+      }}
+    },
+    {
+      "type": "group",
+      "encode": {"update": {
+        "x": {"signal": "panelX"}, "y": {"signal": "panelY"},
+        "width": {"signal": "panelWidth"}, "height": {"value": 180}
+      }},
+      "marks": [
+        {
+          "type": "text", "interactive": false,
+          "encode": {"update": {
+            "x": {"value": 0}, "y": {"value": 0},
+            "text": {"signal": "focus ? focus.state_name_2026 : ''"},
+            "fontSize": {"value": 19}, "fontWeight": {"value": 700},
+            "limit": {"signal": "panelWidth"}
+          }}
+        },
+        {
+          "type": "text", "interactive": false,
+          "encode": {"update": {
+            "x": {"value": 0}, "y": {"value": 47},
+            "text": {"signal": "focus && focus.total > 0 ? format(focus.share, '.1%') : '—'"},
+            "fontSize": {"value": 40}, "fontWeight": {"value": 700}, "fill": {"value": "#94231d"}
+          }}
+        },
+        {
+          "type": "text", "interactive": false,
+          "encode": {"update": {
+            "x": {"value": 0}, "y": {"value": 74},
+            "text": {"signal": "focus && focus.total > 0 ? focus.cr + ' of ' + focus.total + ' listed taxa are CR' : 'No listed insect taxa in this extract'"},
+            "fontSize": {"value": 13}, "limit": {"signal": "panelWidth"}
+          }}
+        },
+        {
+          "type": "text", "interactive": false,
+          "encode": {"update": {
+            "x": {"value": 0}, "y": {"value": 100},
+            "text": {"signal": "focus && focus.total > 0 ? 'EN: ' + focus.en + '    VU: ' + focus.vu : 'Percentage is not applicable.'"},
+            "fontSize": {"value": 13}, "fill": {"value": "#666666"}
+          }}
+        },
+        {
+          "type": "text", "interactive": false,
+          "encode": {"update": {
+            "x": {"value": 0}, "y": {"value": 132},
+            "text": {"value": ["Hover over a region or label.", "Small totals can give large percentages."]},
+            "lineHeight": {"value": 18}, "fontSize": {"value": 12},
+            "fill": {"value": "#666666"}
+          }}
+        }
+      ]
+    },
+    {
+      "type": "rect", "interactive": false, "from": {"data": "legend"},
+      "encode": {"update": {
+        "x": {"signal": "10 + (datum.index % legendColumns) * legendStep"},
+        "y": {"signal": "legendY + floor(datum.index / legendColumns) * 27"},
+        "width": {"value": 12}, "height": {"value": 12},
+        "fill": {"field": "colour"}, "stroke": {"value": "#cccccc"}, "strokeWidth": {"value": 0.5}
+      }}
+    },
+    {
+      "type": "text", "interactive": false, "from": {"data": "legend"},
+      "encode": {"update": {
+        "x": {"signal": "28 + (datum.index % legendColumns) * legendStep"},
+        "y": {"signal": "legendY + 6 + floor(datum.index / legendColumns) * 27"},
+        "text": {"field": "label"}, "baseline": {"value": "middle"},
+        "fontSize": {"signal": "compact ? 11 : 12"}
+      }}
+    }
+  ]
+}

@@ -336,6 +336,92 @@
 
         </section>
 
+        <!-- Chart 8 is the first map in section 04 of the plan. -->
+        <section class="visualisation-section">
+
+            <div class="story-text">
+                <p class="section-number">04 — THE GEOGRAPHY OF CONSERVATION</p>
+
+                <h2>Where is the share of Critically Endangered listed insects highest?</h2>
+
+                <p>
+                    The same national list looks different across Australia.
+                    This map compares the share of listed insect taxa associated
+                    with each state or territory that are Critically Endangered,
+                    the most severe threat category in this extract.
+                </p>
+
+                <p>
+                    Darker regions have a higher percentage. Read the counts
+                    alongside the percentage: a large share can come from a
+                    small number of listed taxa.
+                </p>
+            </div>
+
+            <div class="chart-container chart8-container">
+
+                <div class="chart-heading">
+                    <h3>Critically Endangered share of each jurisdiction's listed insects</h3>
+
+                    <p>
+                        Percentage = Critically Endangered taxa ÷ all nationally
+                        listed insect taxa associated with that jurisdiction.
+                        Labels show the percentage and, where space allows,
+                        the count used to calculate it. Hover over a region or
+                        label to see its threat-category breakdown.
+                    </p>
+                </div>
+
+                <div
+                    id="chart8"
+                    style="width: 100%; min-width: 0;"
+                    aria-label="Choropleth map of the percentage of nationally listed insect taxa in each state or territory that are Critically Endangered"
+                ></div>
+
+                <p class="chart-note">
+                    CR = Critically Endangered; EN = Endangered; VU = Vulnerable.
+                    A taxon is a listed species or subspecies. Grey means no
+                    listed insect taxa in this extract, so a percentage cannot
+                    be calculated. A region showing 0% has listed taxa, with
+                    none classified as Critically Endangered.
+                </p>
+
+                <p class="chart-note">
+                    This is a comparison of the national listing extract, not
+                    the probability that an insect is threatened, a measure of
+                    population size, or a ranking of overall ecological risk.
+                    A taxon can be associated with more than one jurisdiction.
+                    The map uses an equal-area Albers projection and shows
+                    mainland Australia and Tasmania; offshore islands and Other
+                    Territories are omitted at this scale. ACT has a locator
+                    dot and an external label because it is small.
+                </p>
+
+            </div>
+
+            <p class="source-note">
+                Listing data:
+                <a
+                    href="https://data.gov.au/data/dataset/ae652011-f39e-4c6c-91b8-1dc2d2dfee8f"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >DCCEEW — EPBC Act Threatened Species State Lists</a>.
+                Counts, percentages and the extract date are calculated from
+                the supplied CSV files.
+            </p>
+
+            <p class="source-note">
+                Boundaries and jurisdiction codes:
+                <a
+                    href="https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs/edition-4-july-2026-june-2031/access-and-downloads/geospatial-web-services"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >Australian Bureau of Statistics — ASGS Edition 4 (2026)</a>.
+                Generalised boundaries are simplified for this national view.
+            </p>
+
+        </section>
+
     </main>
 
     <script src="js/visualisation.js"></script>
