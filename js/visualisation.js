@@ -1,7 +1,7 @@
 // All observations and counts come from the CSV URLs in the JSON specs.
 // Numeric constants below control layout only.
 
-let chart8BoundaryPromise;
+let australiaBoundaryPromise;
 
 async function fetchJSON(url) {
     const response = await fetch(url);
@@ -132,9 +132,9 @@ function hasRequiredBoundaries(features) {
         .every(code => codes.has(code));
 }
 
-async function loadChart8Boundaries() {
-    if (!chart8BoundaryPromise) {
-        chart8BoundaryPromise = (async () => {
+async function loadAustraliaBoundaries() {
+    if (!australiaBoundaryPromise) {
+        australiaBoundaryPromise = (async () => {
             try {
                 const local = await fetchJSON("data/australia_states_2026.geojson");
 
@@ -170,7 +170,7 @@ async function loadChart8Boundaries() {
         })();
     }
 
-    return chart8BoundaryPromise;
+    return australiaBoundaryPromise;
 }
 
 function wrapText(text, maxWidth, font) {
@@ -209,16 +209,16 @@ async function mountChart(id, path) {
 
     const original = await response.json();
 
-    if (id === "chart8") {
+    if (id === "chart8" || id === "chart9") {
         element.textContent = "Loading map…";
 
         const mapData = original.data?.find(data => data.name === "map");
 
         if (!mapData) {
-            throw new Error("Chart 8 is missing its map dataset.");
+            throw new Error(`${id} is missing its map dataset.`);
         }
 
-        mapData.values = await loadChart8Boundaries();
+        mapData.values = await loadAustraliaBoundaries();
 
         // Supply verified geometry directly so a missing local file cannot
         // silently leave Vega with an empty map dataset.
@@ -263,8 +263,12 @@ async function mountChart(id, path) {
                 spec.height = width < 600 ? (width < 400 ? 660 : 780) : 610;
             }
 
+            if (id === "chart9") {
+                spec.height = width < 600 ? (width < 400 ? 760 : 850) : 650;
+            }
+
             spec.autosize = {
-                type: id === "chart8" ? "none" : "fit-x",
+                type: id === "chart8" || id === "chart9" ? "none" : "fit-x",
                 contains: "padding",
                 resize: true
             };
@@ -372,7 +376,8 @@ async function initialiseCharts() {
         ["chart5", "specs/chart5_conservation_treemap.json"],
         ["chart6", "specs/chart6_conservation_alluvial.json"],
         ["chart7", "specs/chart7_conservation_upset.json"],
-        ["chart8", "specs/chart8_conservation_choropleth.json"]
+        ["chart8", "specs/chart8_conservation_choropleth.json"],
+        ["chart9", "specs/chart9_conservation_symbols.json"]
     ];
 
     await Promise.all(
@@ -385,8 +390,8 @@ async function initialiseCharts() {
                 const element = document.getElementById(id);
 
                 if (element) {
-                    element.textContent = id === "chart8"
-                        ? `Chart 8 could not load: ${error.message}`
+                    element.textContent = id === "chart8" || id === "chart9"
+                        ? `${id === "chart8" ? "Chart 8" : "Chart 9"} could not load: ${error.message}`
                         : "This chart could not load. Check the JSON and CSV paths.";
                 }
             }

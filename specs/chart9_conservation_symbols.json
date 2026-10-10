@@ -1,0 +1,584 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Chart 9: proportional-symbol map of distinct nationally listed insect taxa associated with each state or territory. Circle area is proportional to the CSV-derived count; symbols are jurisdiction summaries, not observation locations.",
+  "width": 956,
+  "height": 650,
+  "padding": 12,
+  "autosize": {"type": "none", "contains": "padding", "resize": true},
+  "background": "#ffffff",
+  "config": {"text": {"font": "Source Sans 3, sans-serif", "fill": "#252525"}},
+  "signals": [
+    {"name": "compact", "update": "width < 576"},
+    {"name": "mapWidth", "update": "compact ? width : width * 0.68"},
+    {"name": "mapBottom", "update": "compact ? min(440, max(340, width * 0.72 + 80)) : height - 150"},
+    {"name": "panelX", "update": "compact ? 12 : mapWidth + 22"},
+    {"name": "panelY", "update": "compact ? mapBottom + 28 : 124"},
+    {"name": "panelWidth", "update": "compact ? width - 24 : width - mapWidth - 32"},
+    {"name": "legendY", "update": "height - 116"},
+    {"name": "symbolAreaMax", "update": "compact ? 1400 : 3000"},
+    {
+      "name": "hoverState",
+      "value": null,
+      "on": [
+        {
+          "events": "@regions:mouseover, @stateSymbols:mouseover, @zeroSymbols:mouseover, @stateCodes:mouseover, @stateCounts:mouseover",
+          "update": "datum"
+        },
+        {
+          "events": "@regions:mouseout, @stateSymbols:mouseout, @zeroSymbols:mouseout, @stateCodes:mouseout, @stateCounts:mouseout",
+          "update": "null"
+        }
+      ]
+    },
+    {"name": "highest", "update": "length(data('ranked')) ? data('ranked')[0] : null"},
+    {"name": "focus", "update": "hoverState || highest"},
+    {
+      "name": "snapshotText",
+      "update": "length(data('snapshot')) ? 'DCCEEW extract · ' + timeFormat(timeParse(data('snapshot')[0].extract_date, '%Y-%m-%d'), '%e %B %Y') : 'DCCEEW listing extract'"
+    }
+  ],
+  "data": [
+    {
+      "name": "associations",
+      "url": "data/combined_threatened_insects_by_state_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "isValid(datum.taxon_id) ? datum.taxon_id : datum['\\uFEFFtaxon_id']",
+          "as": "taxon_id"
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.taxon_id) && datum.taxon_id !== '' && isValid(datum.state_abbreviation) && datum.state_abbreviation !== ''"
+        },
+        {"type": "formula", "expr": "datum.epbc_status_code === 'CR' ? 1 : 0", "as": "is_cr"},
+        {"type": "formula", "expr": "datum.epbc_status_code === 'EN' ? 1 : 0", "as": "is_en"},
+        {"type": "formula", "expr": "datum.epbc_status_code === 'VU' ? 1 : 0", "as": "is_vu"}
+      ]
+    },
+    {
+      "name": "snapshot",
+      "source": "associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": ["dcceew_extract_date"],
+          "ops": ["min"],
+          "as": ["extract_date"]
+        }
+      ]
+    },
+    {
+      "name": "unique_associations",
+      "source": "associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["taxon_id", "state_abbreviation"],
+          "fields": ["is_cr", "is_en", "is_vu"],
+          "ops": ["max", "max", "max"],
+          "as": ["is_cr", "is_en", "is_vu"]
+        }
+      ]
+    },
+    {
+      "name": "totals",
+      "source": "unique_associations",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["state_abbreviation"],
+          "fields": ["is_cr", "is_en", "is_vu", null],
+          "ops": ["sum", "sum", "sum", "count"],
+          "as": ["cr", "en", "vu", "total"]
+        }
+      ]
+    },
+    {
+      "name": "jurisdictions",
+      "url": "data/abs_state_codes_2026.csv",
+      "format": {"type": "csv"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toString(isValid(datum.state_code_2026) ? datum.state_code_2026 : datum['\\uFEFFstate_code_2026'])",
+          "as": "state_code_2026"
+        },
+        {
+          "type": "lookup",
+          "from": "totals",
+          "key": "state_abbreviation",
+          "fields": ["state_abbreviation"],
+          "values": ["cr", "en", "vu", "total"],
+          "as": ["cr", "en", "vu", "total"],
+          "default": 0
+        },
+        {
+          "type": "formula",
+          "expr": "datum.total > 0 ? datum.cr / datum.total : null",
+          "as": "share"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.total > 0 ? format(datum.share, '.1%') : 'No listed taxa'",
+          "as": "percentage_text"
+        }
+      ]
+    },
+    {
+      "name": "ranked",
+      "source": "jurisdictions",
+      "transform": [
+        {"type": "filter", "expr": "datum.total > 0 && datum.state_abbreviation !== 'OT'"},
+        {
+          "type": "collect",
+          "sort": {
+            "field": ["total", "state_abbreviation"],
+            "order": ["descending", "ascending"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "map",
+      "url": "data/australia_states_2026.geojson",
+      "format": {"type": "json", "property": "features"},
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "toString(datum.properties.state_code_2026)",
+          "as": "code"
+        },
+        {
+          "type": "lookup",
+          "from": "jurisdictions",
+          "key": "state_code_2026",
+          "fields": ["code"],
+          "values": [
+            "state_abbreviation",
+            "state_name_2026",
+            "cr",
+            "en",
+            "vu",
+            "total",
+            "share",
+            "percentage_text"
+          ],
+          "as": [
+            "state_abbreviation",
+            "state_name_2026",
+            "cr",
+            "en",
+            "vu",
+            "total",
+            "share",
+            "percentage_text"
+          ]
+        },
+        {
+          "type": "formula",
+          "as": "details",
+          "expr": "{'State or territory': datum.state_name_2026, 'All listed insect taxa': datum.total, 'Critically Endangered (CR)': datum.cr, 'Endangered (EN)': datum.en, 'Vulnerable (VU)': datum.vu, 'Interpretation': 'Jurisdiction association, not population size'}"
+        }
+      ]
+    },
+    {
+      "name": "labels",
+      "source": "map",
+      "transform": [
+        {"type": "formula", "expr": "geoCentroid('australia', datum)", "as": "centroid"},
+        {"type": "formula", "expr": "datum.centroid[0]", "as": "cx"},
+        {"type": "formula", "expr": "datum.centroid[1]", "as": "cy"},
+        {
+          "type": "formula",
+          "expr": "indexof(['ACT', 'VIC', 'TAS'], datum.state_abbreviation) >= 0",
+          "as": "external"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.cx + (datum.state_abbreviation === 'ACT' ? (compact ? 40 : 66) : datum.state_abbreviation === 'VIC' ? (compact ? -34 : -52) : datum.state_abbreviation === 'TAS' ? (compact ? 40 : 60) : 0)",
+          "as": "sx"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.cy + (datum.state_abbreviation === 'ACT' ? -10 : datum.state_abbreviation === 'VIC' ? 26 : datum.state_abbreviation === 'TAS' ? 4 : 0)",
+          "as": "sy"
+        },
+        {
+          "type": "formula",
+          "expr": "sqrt(scale('symbolArea', datum.total) / PI)",
+          "as": "radius"
+        }
+      ]
+    },
+    {
+      "name": "positive",
+      "source": "labels",
+      "transform": [{"type": "filter", "expr": "datum.total > 0"}]
+    },
+    {
+      "name": "zero",
+      "source": "labels",
+      "transform": [{"type": "filter", "expr": "datum.total === 0"}]
+    },
+    {
+      "name": "callouts",
+      "source": "labels",
+      "transform": [{"type": "filter", "expr": "datum.external"}]
+    },
+    {
+      "name": "legend",
+      "source": "ranked",
+      "transform": [
+        {
+          "type": "collect",
+          "sort": {
+            "field": ["total", "state_abbreviation"],
+            "order": ["ascending", "ascending"]
+          }
+        },
+        {"type": "window", "ops": ["row_number"], "as": ["rank"]},
+        {
+          "type": "filter",
+          "expr": "datum.rank === 1 || datum.rank === ceil(length(data('ranked')) / 2) || datum.rank === length(data('ranked'))"
+        },
+        {"type": "window", "ops": ["row_number"], "as": ["index"]},
+        {
+          "type": "formula",
+          "expr": "sqrt(scale('symbolArea', datum.total) / PI)",
+          "as": "radius"
+        }
+      ]
+    }
+  ],
+  "projections": [
+    {
+      "name": "australia",
+      "type": "albers",
+      "rotate": [-134, 0, 0],
+      "center": [0, -27],
+      "parallels": [-18, -36],
+      "fit": {"signal": "data('map')"},
+      "extent": {"signal": "[[20, 94], [mapWidth - (compact ? 52 : 82), mapBottom - 38]]"}
+    }
+  ],
+  "scales": [
+    {
+      "name": "symbolArea",
+      "type": "linear",
+      "domain": {"data": "ranked", "field": "total"},
+      "zero": true,
+      "nice": false,
+      "range": [0, {"signal": "symbolAreaMax"}]
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"value": 16},
+          "text": {"signal": "snapshotText"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"}
+        }
+      },
+      "interactive": false
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"value": 44},
+          "text": {
+            "signal": "highest ? (compact ? ['Most listed taxa: ' + highest.state_name_2026, highest.total + ' distinct taxa associated with this jurisdiction'] : 'Most listed taxa: ' + highest.state_name_2026 + ' · ' + highest.total + ' distinct taxa') : 'No listed taxa available'"
+          },
+          "fontSize": {"value": 13},
+          "fontWeight": {"value": 700},
+          "lineHeight": {"value": 18},
+          "fill": {"value": "#147a70"}
+        }
+      },
+      "interactive": false
+    },
+    {
+      "type": "shape",
+      "encode": {
+        "update": {
+          "fill": {"value": "#f0f2ed"},
+          "stroke": {
+            "signal": "hoverState && hoverState.code === datum.code ? '#147a70' : '#ffffff'"
+          },
+          "strokeWidth": {
+            "signal": "hoverState && hoverState.code === datum.code ? 2 : 1.2"
+          },
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      },
+      "name": "regions",
+      "from": {"data": "map"},
+      "transform": [{"type": "geoshape", "projection": "australia"}]
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {"field": "cx"},
+          "y": {"field": "cy"},
+          "x2": {"field": "sx"},
+          "y2": {"field": "sy"},
+          "stroke": {"value": "#878e87"},
+          "strokeWidth": {"value": 1}
+        }
+      },
+      "from": {"data": "callouts"},
+      "interactive": false
+    },
+    {
+      "type": "symbol",
+      "encode": {
+        "update": {
+          "x": {"field": "sx"},
+          "y": {"field": "sy"},
+          "shape": {"value": "circle"},
+          "size": {"scale": "symbolArea", "field": "total"},
+          "fill": {"value": "#178f83"},
+          "fillOpacity": {"value": 0.78},
+          "stroke": {
+            "signal": "hoverState && hoverState.code === datum.code ? '#173d38' : '#ffffff'"
+          },
+          "strokeWidth": {
+            "signal": "hoverState && hoverState.code === datum.code ? 2.5 : 1.3"
+          },
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      },
+      "name": "stateSymbols",
+      "from": {"data": "positive"}
+    },
+    {
+      "type": "symbol",
+      "encode": {
+        "update": {
+          "x": {"field": "sx"},
+          "y": {"field": "sy"},
+          "shape": {"value": "cross"},
+          "size": {"value": 48},
+          "fill": {"value": "#7b847b"},
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      },
+      "name": "zeroSymbols",
+      "from": {"data": "zero"}
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"field": "sx"},
+          "y": {"signal": "datum.sy - datum.radius - 9"},
+          "text": {"field": "state_abbreviation"},
+          "align": {"value": "center"},
+          "baseline": {"value": "bottom"},
+          "fontSize": {"signal": "compact ? 11 : 13"},
+          "fontWeight": {"value": 700},
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      },
+      "name": "stateCodes",
+      "from": {"data": "labels"}
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"field": "sx"},
+          "y": {"field": "sy"},
+          "text": {"signal": "datum.total > 0 ? datum.total : ''"},
+          "align": {"value": "center"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"signal": "compact ? 12 : 15"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#ffffff"},
+          "tooltip": {"field": "details"},
+          "cursor": {"value": "pointer"}
+        }
+      },
+      "name": "stateCounts",
+      "from": {"data": "labels"}
+    },
+    {
+      "type": "group",
+      "encode": {
+        "update": {
+          "x": {"signal": "panelX"},
+          "y": {"signal": "panelY"},
+          "width": {"signal": "panelWidth"},
+          "height": {"value": 210}
+        }
+      },
+      "marks": [
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 0},
+              "text": {
+                "signal": "focus ? (panelWidth < 230 ? focus.state_abbreviation : focus.state_name_2026) : ''"
+              },
+              "fontSize": {"value": 19},
+              "fontWeight": {"value": 700},
+              "limit": {"signal": "panelWidth"}
+            }
+          },
+          "interactive": false
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 50},
+              "text": {"signal": "focus ? focus.total : '—'"},
+              "fontSize": {"value": 44},
+              "fontWeight": {"value": 700},
+              "fill": {"value": "#147a70"}
+            }
+          },
+          "interactive": false
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 78},
+              "text": {
+                "signal": "panelWidth < 190 ? ['nationally listed', 'insect taxa'] : 'nationally listed insect taxa'"
+              },
+              "fontSize": {"value": 14},
+              "lineHeight": {"value": 17}
+            }
+          },
+          "interactive": false
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 110},
+              "text": {
+                "signal": "focus ? 'CR: ' + focus.cr + '    EN: ' + focus.en + '    VU: ' + focus.vu : ''"
+              },
+              "fontSize": {"value": 13},
+              "fill": {"value": "#666666"}
+            }
+          },
+          "interactive": false
+        },
+        {
+          "type": "text",
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 146},
+              "text": {
+                "signal": "focus && focus.total === 0 ? (panelWidth < 190 ? ['No listed taxa recorded.', 'This does not mean', 'no insects or no', 'conservation concerns.'] : ['No listed taxa in this extract.', 'This does not mean no insects', 'or no conservation concerns.']) : (panelWidth < 190 ? ['Hover over a region.', 'Listing associations,', 'not population counts.'] : ['Hover over a circle or region.', 'These are listing associations,', 'not insect population counts.'])"
+              },
+              "fontSize": {"value": 12},
+              "lineHeight": {"value": 18},
+              "fill": {"value": "#666666"}
+            }
+          },
+          "interactive": false
+        }
+      ]
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "x2": {"signal": "width - 10"},
+          "y": {"signal": "legendY - 12"},
+          "stroke": {"value": "#e1e5df"}
+        }
+      },
+      "interactive": false
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"value": 10},
+          "y": {"signal": "legendY + 4"},
+          "text": {"value": "Circle area = number of listed taxa"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": 600}
+        }
+      },
+      "interactive": false
+    },
+    {
+      "type": "symbol",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "52 + (datum.index - 1) * (compact ? (width - 60) / 3 : 130)"
+          },
+          "y": {"signal": "legendY + 48"},
+          "shape": {"value": "circle"},
+          "size": {"scale": "symbolArea", "field": "total"},
+          "fill": {"value": "#178f83"},
+          "fillOpacity": {"value": 0.78},
+          "stroke": {"value": "#ffffff"},
+          "strokeWidth": {"value": 1.3}
+        }
+      },
+      "from": {"data": "legend"},
+      "interactive": false
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "52 + (datum.index - 1) * (compact ? (width - 60) / 3 : 130)"
+          },
+          "y": {"signal": "legendY + 48"},
+          "text": {"field": "total"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#ffffff"},
+          "baseline": {"value": "middle"},
+          "align": {"value": "center"}
+        }
+      },
+      "from": {"data": "legend"},
+      "interactive": false
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"signal": "width < 760 ? 10 : 450"},
+          "y": {"signal": "width < 760 ? legendY + 92 : legendY + 48"},
+          "text": {"value": "× = no listed taxa in this extract"},
+          "fontSize": {"value": 12},
+          "baseline": {"value": "middle"},
+          "fill": {"value": "#666666"}
+        }
+      },
+      "interactive": false
+    }
+  ]
+}
