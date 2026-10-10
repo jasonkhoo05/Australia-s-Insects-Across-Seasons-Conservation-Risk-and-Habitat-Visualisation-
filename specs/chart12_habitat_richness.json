@@ -1,0 +1,422 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Chart 12: stacked habitat richness bars from the historical Melbourne survey. All counts load from CSV; other species and percentages are derived.",
+  "width": 940,
+  "height": 450,
+  "padding": 0,
+  "autosize": {"type": "none", "contains": "padding"},
+  "background": "#ffffff",
+  "signals": [
+    {"name": "displayMode", "value": "counts"},
+    {
+      "name": "hoveredHabitat",
+      "value": null,
+      "on": [
+        {"events": "@habitat_bars:mouseover", "update": "datum.habitat_type"},
+        {"events": "@habitat_bars:mouseout", "update": "null"}
+      ]
+    },
+    {"name": "compact", "update": "width < 600"},
+    {"name": "plotLeft", "update": "width < 450 ? 88 : 110"},
+    {"name": "plotRight", "update": "width - 72"},
+    {"name": "plotTop", "update": "compact ? 214 : 164"},
+    {"name": "plotBottom", "update": "height - 58"},
+    {
+      "name": "maximumRichness",
+      "update": "length(data('summary')) ? data('summary')[0].maximum_richness : 0"
+    },
+    {
+      "name": "habitatComparison",
+      "update": "length(data('highest_habitat')) && length(data('lawn')) && data('lawn')[0].species_richness > 0 ? data('highest_habitat')[0].species_richness / data('lawn')[0].species_richness : null"
+    }
+  ],
+  "data": [
+    {
+      "name": "habitats",
+      "url": "data/city_melbourne_habitat_richness_2014_2015.csv",
+      "format": {
+        "type": "csv",
+        "parse": {
+          "species_richness": "number",
+          "unique_species": "number"
+        }
+      },
+      "transform": [
+        {
+          "type": "formula",
+          "as": "habitat_type",
+          "expr": "isValid(datum.habitat_type) ? datum.habitat_type : datum['\\ufeffhabitat_type']"
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.species_richness) && isValid(datum.unique_species) && datum.species_richness > 0 && datum.unique_species >= 0 && datum.unique_species <= datum.species_richness"
+        },
+        {
+          "type": "formula",
+          "as": "other_species",
+          "expr": "datum.species_richness - datum.unique_species"
+        },
+        {
+          "type": "formula",
+          "as": "unique_share",
+          "expr": "datum.unique_species / datum.species_richness"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": ["species_richness", "habitat_type"],
+            "order": ["descending", "ascending"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "summary",
+      "source": "habitats",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": ["species_richness"],
+          "ops": ["max"],
+          "as": ["maximum_richness"]
+        }
+      ]
+    },
+    {
+      "name": "highest_habitat",
+      "source": "habitats",
+      "transform": [
+        {
+          "type": "window",
+          "ops": ["row_number"],
+          "as": ["rank"],
+          "sort": {
+            "field": ["species_richness", "habitat_type"],
+            "order": ["descending", "ascending"]
+          }
+        },
+        {"type": "filter", "expr": "datum.rank === 1"}
+      ]
+    },
+    {
+      "name": "lawn",
+      "source": "habitats",
+      "transform": [
+        {"type": "filter", "expr": "datum.habitat_type === 'Lawn'"}
+      ]
+    },
+    {
+      "name": "segments",
+      "source": "habitats",
+      "transform": [
+        {
+          "type": "fold",
+          "fields": ["unique_species", "other_species"],
+          "as": ["segment_key", "species"]
+        },
+        {
+          "type": "formula",
+          "as": "segment_order",
+          "expr": "datum.segment_key === 'unique_species' ? 0 : 1"
+        },
+        {
+          "type": "formula",
+          "as": "segment_label",
+          "expr": "datum.segment_key === 'unique_species' ? 'Recorded only in this habitat' : 'Other recorded species'"
+        },
+        {
+          "type": "stack",
+          "groupby": ["habitat_type"],
+          "field": "species",
+          "sort": {
+            "field": "segment_order",
+            "order": "ascending"
+          },
+          "as": ["count_start", "count_end"]
+        },
+        {
+          "type": "formula",
+          "as": "share",
+          "expr": "datum.species / datum.species_richness"
+        },
+        {
+          "type": "formula",
+          "as": "start",
+          "expr": "displayMode === 'percent' ? datum.count_start / datum.species_richness : datum.count_start"
+        },
+        {
+          "type": "formula",
+          "as": "end",
+          "expr": "displayMode === 'percent' ? datum.count_end / datum.species_richness : datum.count_end"
+        }
+      ]
+    },
+    {
+      "name": "legend_items",
+      "source": "segments",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["segment_key", "segment_label", "segment_order"]
+        },
+        {
+          "type": "collect",
+          "sort": {"field": "segment_order"}
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "linear",
+      "domain": {
+        "signal": "displayMode === 'percent' ? [0, 1] : [0, maximumRichness]"
+      },
+      "range": [
+        {"signal": "plotLeft"},
+        {"signal": "plotRight"}
+      ],
+      "zero": true,
+      "nice": {"signal": "displayMode !== 'percent'"}
+    },
+    {
+      "name": "y",
+      "type": "band",
+      "domain": {
+        "data": "habitats",
+        "field": "habitat_type",
+        "sort": {
+          "op": "max",
+          "field": "species_richness",
+          "order": "descending"
+        }
+      },
+      "range": [
+        {"signal": "plotTop"},
+        {"signal": "plotBottom"}
+      ],
+      "paddingInner": 0.3,
+      "paddingOuter": 0.2
+    },
+    {
+      "name": "colour",
+      "type": "ordinal",
+      "domain": ["unique_species", "other_species"],
+      "range": ["#147D78", "#ADD6AA"]
+    }
+  ],
+  "axes": [
+    {
+      "orient": "bottom",
+      "scale": "x",
+      "offset": {"signal": "plotBottom - height"},
+      "tickCount": {"signal": "width < 450 ? 3 : 5"},
+      "tickMinStep": {
+        "signal": "displayMode === 'percent' ? 0.01 : 1"
+      },
+      "format": {
+        "signal": "displayMode === 'percent' ? '.0%' : ',.0f'"
+      },
+      "title": {
+        "signal": "displayMode === 'percent' ? 'Share within each habitat' : 'Recorded species'"
+      },
+      "titlePadding": 12,
+      "labelPadding": 6,
+      "domainColor": "#B9C5C4",
+      "tickColor": "#B9C5C4",
+      "labelColor": "#555555",
+      "labelFont": "Source Sans 3",
+      "labelFontSize": 12,
+      "titleColor": "#444444",
+      "titleFont": "Source Sans 3",
+      "titleFontSize": 13,
+      "grid": false
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "from": {"data": "highest_habitat"},
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "y": {"value": 6},
+          "text": {
+            "signal": "isValid(habitatComparison) ? (compact ? [datum.habitat_type + ' recorded about ' + format(habitatComparison, '.1f') + '×', 'the species richness of lawn.'] : datum.habitat_type + ' recorded about ' + format(habitatComparison, '.1f') + '× the species richness of lawn.') : 'Compare recorded richness across habitats'"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "compact ? 13 : 16"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "baseline": {"value": "top"},
+          "lineHeight": {"value": 19}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "highest_habitat"},
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "y": {"signal": "compact ? 52 : 34"},
+          "text": {
+            "signal": "compact ? [datum.geography, 'Historical survey: ' + datum.survey_period] : datum.geography + ' · Historical survey: ' + datum.survey_period"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"},
+          "baseline": {"value": "top"},
+          "lineHeight": {"value": 16}
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "from": {"data": "legend_items"},
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "8 + (compact ? 0 : datum.segment_order * width / 2)"
+          },
+          "y": {
+            "signal": "compact ? 112 + datum.segment_order * 30 : 84"
+          },
+          "shape": {"value": "square"},
+          "size": {"value": 144},
+          "fill": {"scale": "colour", "field": "segment_key"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "legend_items"},
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "24 + (compact ? 0 : datum.segment_order * width / 2)"
+          },
+          "y": {
+            "signal": "compact ? 112 + datum.segment_order * 30 : 84"
+          },
+          "text": {"field": "segment_label"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#444444"},
+          "baseline": {"value": "middle"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "y": {"signal": "compact ? 178 : 124"},
+          "text": {
+            "signal": "displayMode === 'percent' ? (compact ? ['Segments show percentages;', 'end labels show total species.'] : 'Segments show percentages; end labels show total species.') : (compact ? ['Segment labels show counts;', 'end labels show total species.'] : 'Segment labels show counts; end labels show total species.')"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#666666"},
+          "baseline": {"value": "top"},
+          "lineHeight": {"value": 16}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "habitats"},
+      "encode": {
+        "update": {
+          "x": {"signal": "plotLeft - 10"},
+          "y": {
+            "signal": "scale('y', datum.habitat_type) + bandwidth('y') / 2"
+          },
+          "text": {"field": "habitat_type"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 450 ? 12 : 14"},
+          "fontWeight": {"value": 600},
+          "fill": {"value": "#444444"},
+          "align": {"value": "right"},
+          "baseline": {"value": "middle"}
+        }
+      }
+    },
+    {
+      "name": "habitat_bars",
+      "type": "rect",
+      "from": {"data": "segments"},
+      "encode": {
+        "update": {
+          "x": {"scale": "x", "field": "start"},
+          "x2": {"scale": "x", "field": "end"},
+          "y": {"scale": "y", "field": "habitat_type"},
+          "height": {"signal": "bandwidth('y')"},
+          "fill": {"scale": "colour", "field": "segment_key"},
+          "stroke": {"value": "#ffffff"},
+          "strokeWidth": {"value": 1},
+          "opacity": {
+            "signal": "hoveredHabitat && hoveredHabitat !== datum.habitat_type ? 0.4 : 1"
+          },
+          "tooltip": {
+            "signal": "{'Habitat': datum.habitat_type, 'Segment': datum.segment_label, 'Species in segment': datum.species, 'Share of habitat total': format(datum.share, '.1%'), 'Total recorded species': datum.species_richness, 'Recorded only in this habitat': datum.unique_species, 'Other recorded species': datum.other_species, 'Geography': datum.geography, 'Survey period': datum.survey_period, 'Source': datum.source}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "interactive": false,
+      "from": {"data": "segments"},
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "(scale('x', datum.start) + scale('x', datum.end)) / 2"
+          },
+          "y": {
+            "signal": "scale('y', datum.habitat_type) + bandwidth('y') / 2"
+          },
+          "text": {
+            "signal": "displayMode === 'percent' ? format(datum.share, '.0%') : format(datum.species, ',')"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 450 ? 11 : 14"},
+          "fontWeight": {"value": 700},
+          "fill": {
+            "signal": "datum.segment_key === 'unique_species' ? '#ffffff' : '#24463B'"
+          },
+          "align": {"value": "center"},
+          "baseline": {"value": "middle"},
+          "opacity": {
+            "signal": "scale('x', datum.end) - scale('x', datum.start) < (displayMode === 'percent' ? format(datum.share, '.0%') : format(datum.species, ',')).length * (width < 450 ? 6 : 8) + 6 ? 0 : (hoveredHabitat && hoveredHabitat !== datum.habitat_type ? 0.4 : 1)"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "habitats"},
+      "encode": {
+        "update": {
+          "x": {
+            "signal": "scale('x', displayMode === 'percent' ? 1 : datum.species_richness) + 8"
+          },
+          "y": {
+            "signal": "scale('y', datum.habitat_type) + bandwidth('y') / 2"
+          },
+          "text": {
+            "signal": "format(datum.species_richness, ',') + (displayMode === 'percent' ? ' total' : '')"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 450 ? 11 : 14"},
+          "fontWeight": {"value": 700},
+          "fill": {"value": "#252525"},
+          "baseline": {"value": "middle"}
+        }
+      }
+    }
+  ],
+  "config": {"font": "Source Sans 3"}
+}

@@ -629,6 +629,100 @@
 
         </section>
 
+        <!-- Chart 12 follows the stacked habitat bars in section 06. -->
+        <section class="visualisation-section">
+
+            <div class="story-text">
+                <p class="section-number">06 — HABITAT MATTERS TOO</p>
+
+                <h2>Insect diversity differs between urban habitats</h2>
+
+                <p>
+                    How we look affects what we find. Where we look matters too:
+                    in the historical Melbourne survey, mid-storey vegetation,
+                    grassland and tree habitats each recorded more insect
+                    species than lawn.
+                </p>
+
+                <p>
+                    Total richness tells only part of the story. Each habitat
+                    also contained species that were not recorded in the other
+                    three habitat types, showing how different habitats
+                    contributed to the diversity documented in this survey.
+                </p>
+            </div>
+
+            <div class="chart-container chart12-container">
+
+                <div class="chart-heading">
+                    <h3>Which habitats recorded more species of their own?</h3>
+
+                    <p>
+                        Each bar shows one habitat. The dark teal segment counts
+                        species recorded only in that habitat among the four
+                        surveyed types. The pale green segment counts its other
+                        recorded species. Together, the segments form the total
+                        recorded species richness, labelled at the bar's end.
+                    </p>
+
+                    <p>
+                        Switch to percentages to compare the share recorded
+                        only in each habitat. The order stays the same, from
+                        highest to lowest total richness. Hover over either
+                        segment to see counts and percentages. Labels are
+                        hidden when a segment is too narrow.
+                    </p>
+
+                    <p>
+                        <label for="chart12-measure">Compare habitats by: </label>
+                        <select id="chart12-measure" style="max-width: 100%;">
+                            <option value="counts">Recorded species counts</option>
+                            <option value="percent">Share within each habitat (%)</option>
+                        </select>
+                    </p>
+                </div>
+
+                <div
+                    id="chart12"
+                    style="width: 100%; min-width: 0;"
+                    aria-label="Stacked horizontal bars comparing total recorded species and species recorded only in each habitat in the 2014–2015 Melbourne insect survey"
+                ></div>
+
+                <p class="chart-note">
+                    Historical local case study: City of Melbourne local
+                    government area, 2014–2015. Species richness is the number
+                    of different recorded species, not the number of individual
+                    insects. “Only in this habitat” describes the survey
+                    records; it does not establish that a species cannot live
+                    in other habitats or occurs nowhere else.
+                </p>
+
+                <p class="chart-note">
+                    Other recorded species = total richness minus species
+                    recorded only in that habitat. Species can occur in
+                    multiple habitat types, so adding the four totals would
+                    count some species more than once. These results describe
+                    this historical local survey; they do not establish a
+                    causal effect of habitat type or provide current
+                    Australia-wide estimates.
+                </p>
+
+            </div>
+
+            <p class="source-note">
+                Historical habitat comparison:
+                <a
+                    href="https://discover.data.vic.gov.au/dataset/insect-records-in-the-city-of-melbourne-from-little-things-that-run-the-city"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >City of Melbourne and RMIT — The Little Things that Run the City</a>.
+                The supplied CSV summarises Chapter 5, Figures 5.1–5.2.
+                All counts, percentages and the comparison above the bars
+                are calculated from that CSV.
+            </p>
+
+        </section>
+
     </main>
 
     <script src="js/visualisation.js"></script>

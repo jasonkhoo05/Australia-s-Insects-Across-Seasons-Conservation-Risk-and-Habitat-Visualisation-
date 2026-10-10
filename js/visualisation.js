@@ -230,6 +230,7 @@ async function mountChart(id, path) {
     let currentEmbed;
     let lastWidth = -1;
     let timer;
+
     const taxonControl = id === "chart10"
         ? document.getElementById("chart10-taxon")
         : null;
@@ -237,6 +238,21 @@ async function mountChart(id, path) {
     const orderControl = id === "chart11"
         ? document.getElementById("chart11-order")
         : null;
+
+    const habitatMeasureControl = id === "chart12"
+        ? document.getElementById("chart12-measure")
+        : null;
+
+    if (habitatMeasureControl) {
+        habitatMeasureControl.addEventListener("change", () => {
+            if (currentEmbed) {
+                currentEmbed.view
+                    .signal("displayMode", habitatMeasureControl.value)
+                    .runAsync()
+                    .catch(error => console.error("Error changing the habitat measure:", error));
+            }
+        });
+    }
 
     if (orderControl) {
         orderControl.addEventListener("change", () => {
@@ -319,8 +335,18 @@ async function mountChart(id, path) {
                 }
             }
 
+            if (id === "chart12") {
+                spec.height = width < 600 ? 530 : 450;
+
+                const measure = spec.signals.find(signal => signal.name === "displayMode");
+
+                if (measure && habitatMeasureControl) {
+                    measure.value = habitatMeasureControl.value;
+                }
+            }
+
             spec.autosize = {
-                type: isMap || id === "chart11" ? "none" : "fit-x",
+                type: isMap || ["chart11", "chart12"].includes(id) ? "none" : "fit-x",
                 contains: "padding",
                 resize: true
             };
@@ -466,7 +492,8 @@ async function initialiseCharts() {
         ["chart8", "specs/chart8_conservation_choropleth.json"],
         ["chart9", "specs/chart9_conservation_symbols.json"],
         ["chart10", "specs/chart10_conservation_connections.json"],
-        ["chart11", "specs/chart11_survey_methods.json"]
+        ["chart11", "specs/chart11_survey_methods.json"],
+        ["chart12", "specs/chart12_habitat_richness.json"]
     ];
 
     await Promise.all(
