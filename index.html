@@ -536,6 +536,99 @@
 
         </section>
 
+        <!-- Chart 11 follows the survey-method comparison in section 05. -->
+        <section class="visualisation-section">
+
+            <div class="story-text">
+                <p class="section-number">05 — HOW WE LOOK</p>
+
+                <h2>What we find depends on how we look</h2>
+
+                <p>
+                    The national maps show where listed insects are associated.
+                    A historical Melbourne case study adds another part of the
+                    story: different ways of recording insects reveal different
+                    parts of the community.
+                </p>
+
+                <p>
+                    This comparison brings together long-running Atlas of Living
+                    Australia (ALA) records, a public BioBlitz event and a
+                    targeted insect survey. Their recorded species counts vary
+                    across insect groups. Beetles lead the ALA counts,
+                    butterflies and moths lead the BioBlitz counts, and true
+                    bugs lead the targeted-survey counts.
+                </p>
+            </div>
+
+            <div class="chart-container chart11-container">
+
+                <div class="chart-heading">
+                    <h3>Different recording methods reveal different insect groups</h3>
+
+                    <p>
+                        Each line follows one insect order across three recording
+                        methods. Its height at each vertical axis shows the
+                        number of recorded species. All three axes share the
+                        same scale, starting at zero.
+                    </p>
+
+                    <p>
+                        Hover over a line or point to inspect its counts. Choose
+                        an order below, or click its line, to isolate it and show
+                        exact values. The shared vertical scale then fits that
+                        order; choose All orders or double-click to reset.
+                        Grey lines represent separate additional orders.
+                    </p>
+
+                    <p>
+                        <label for="chart11-order">Inspect an insect order: </label>
+                        <select id="chart11-order" style="max-width: 100%;">
+                            <option value="">All orders</option>
+                        </select>
+                    </p>
+                </div>
+
+                <div
+                    id="chart11"
+                    style="width: 100%; min-width: 0;"
+                    aria-label="Parallel-coordinates chart comparing recorded species by insect order across ALA records, the 2014 Melbourne BioBlitz and the 2014–2015 targeted survey"
+                ></div>
+
+                <p class="chart-note">
+                    Historical local case study: City of Melbourne local
+                    government area. ALA records cover 1875–2014; the BioBlitz
+                    took place in 2014; the targeted survey covers 2014–2015.
+                    These methods differ in duration, effort and coverage.
+                    Their counts do not measure population size or provide a
+                    like-for-like test of recording-method performance.
+                </p>
+
+                <p class="chart-note">
+                    Connecting lines compare methods, not change over time.
+                    The same species can appear in more than one method, so
+                    the counts should not be added to obtain a unique total.
+                    Zero means no species recorded for that order by that
+                    method in this table, not that the order was absent.
+                    These historical Melbourne findings are not current
+                    Australia-wide estimates.
+                </p>
+
+            </div>
+
+            <p class="source-note">
+                Historical comparison:
+                <a
+                    href="https://discover.data.vic.gov.au/dataset/insect-records-in-the-city-of-melbourne-from-little-things-that-run-the-city"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >City of Melbourne and RMIT — The Little Things that Run the City</a>.
+                The supplied CSV summarises Table 3.2 of the report.
+                Counts are loaded from the CSV for each insect order and method.
+            </p>
+
+        </section>
+
     </main>
 
     <script src="js/visualisation.js"></script>

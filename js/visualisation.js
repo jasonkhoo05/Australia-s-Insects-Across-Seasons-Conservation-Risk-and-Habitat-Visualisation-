@@ -234,6 +234,21 @@ async function mountChart(id, path) {
         ? document.getElementById("chart10-taxon")
         : null;
 
+    const orderControl = id === "chart11"
+        ? document.getElementById("chart11-order")
+        : null;
+
+    if (orderControl) {
+        orderControl.addEventListener("change", () => {
+            if (currentEmbed) {
+                currentEmbed.view
+                    .signal("selectedOrder", orderControl.value || null)
+                    .runAsync()
+                    .catch(error => console.error("Error selecting an order:", error));
+            }
+        });
+    }
+
     if (taxonControl) {
         taxonControl.addEventListener("change", () => {
             if (currentEmbed) {
@@ -294,8 +309,18 @@ async function mountChart(id, path) {
                 }
             }
 
+            if (id === "chart11") {
+                spec.height = width < 600 ? 760 : 650;
+
+                const selection = spec.signals.find(signal => signal.name === "selectedOrder");
+
+                if (selection && orderControl) {
+                    selection.value = orderControl.value || null;
+                }
+            }
+
             spec.autosize = {
-                type: isMap ? "none" : "fit-x",
+                type: isMap || id === "chart11" ? "none" : "fit-x",
                 contains: "padding",
                 resize: true
             };
@@ -376,6 +401,25 @@ async function mountChart(id, path) {
 
         currentEmbed = result;
 
+        if (orderControl) {
+            const selected = result.view.signal("selectedOrder");
+            const options = [new Option("All orders", "")];
+
+            for (const order of result.view.data("orders")) {
+                options.push(new Option(
+                    `${order.common_group} (${order.order})`,
+                    order.order
+                ));
+            }
+
+            orderControl.replaceChildren(...options);
+            orderControl.value = selected || "";
+
+            result.view.addSignalListener("selectedOrder", (name, value) => {
+                orderControl.value = value || "";
+            });
+        }
+
         if (taxonControl) {
             const selected = result.view.signal("selectedTaxon");
             const options = [new Option("All taxa", "")];
@@ -421,7 +465,8 @@ async function initialiseCharts() {
         ["chart7", "specs/chart7_conservation_upset.json"],
         ["chart8", "specs/chart8_conservation_choropleth.json"],
         ["chart9", "specs/chart9_conservation_symbols.json"],
-        ["chart10", "specs/chart10_conservation_connections.json"]
+        ["chart10", "specs/chart10_conservation_connections.json"],
+        ["chart11", "specs/chart11_survey_methods.json"]
     ];
 
     await Promise.all(

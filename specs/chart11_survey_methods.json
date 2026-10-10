@@ -1,0 +1,352 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Chart 11: parallel coordinates comparing recorded species by insect order across three historical Melbourne recording methods. Values load from the supplied CSV; connections are not time trends.",
+  "width": 940,
+  "height": 650,
+  "padding": 0,
+  "autosize": {
+    "type": "none",
+    "contains": "padding"
+  },
+  "background": "#ffffff",
+  "signals": [
+    {
+      "name": "selectedOrder",
+      "value": null,
+      "on": [
+        {"events": "@order_paths:click, @order_points:click", "update": "selectedOrder === datum.order ? null : datum.order"},
+        {"events": "dblclick", "update": "null"}
+      ]
+    },
+    {
+      "name": "hoveredOrder",
+      "value": null,
+      "on": [
+        {"events": "@order_paths:mouseover, @order_points:mouseover", "update": "datum.order"},
+        {"events": "@order_paths:mouseout, @order_points:mouseout", "update": "null"}
+      ]
+    },
+    {
+      "name": "legendColumns",
+      "update": "width < 600 ? 1 : 2"
+    },
+    {
+      "name": "legendRows",
+      "update": "ceil(length(data('legend_items')) / legendColumns)"
+    },
+    {
+      "name": "plotTop",
+      "update": "legendRows * 24 + 106"
+    },
+    {
+      "name": "plotBottom",
+      "update": "height - 76"
+    },
+    {
+      "name": "plotLeft",
+      "value": 64
+    },
+    {
+      "name": "plotRight",
+      "update": "width - 44"
+    },
+    {
+      "name": "focusOrder",
+      "update": "selectedOrder || hoveredOrder"
+    },
+    {
+      "name": "scaleCaption",
+      "update": "selectedOrder ? 'Selected order: all three axes use the same zero-based scale' : 'All orders: all three axes use the same zero-based scale'"
+    }
+  ],
+  "data": [
+    {
+      "name": "orders",
+      "url": "data/city_melbourne_species_by_source_and_order_1875_2015.csv",
+      "format": {
+        "type": "csv",
+        "parse": {"ala_species_1875_2014": "number", "melbourne_bioblitz_species_2014": "number", "targeted_survey_species_2014_2015": "number"}
+      },
+      "transform": [
+        {"type": "formula", "as": "common_group", "expr": "isValid(datum.common_group) ? datum.common_group : datum['\\ufeffcommon_group']"},
+        {
+          "type": "formula",
+          "as": "colour_key",
+          "expr": "indexof([\"Coleoptera\", \"Lepidoptera\", \"Hemiptera\", \"Diptera\", \"Hymenoptera\", \"Odonata\", \"Orthoptera\"], datum.order) >= 0 ? datum.common_group : 'Other orders (individual lines)'"
+        },
+        {"type": "collect", "sort": {"field": "common_group", "order": "ascending"}}
+      ]
+    },
+    {
+      "name": "all_points",
+      "source": "orders",
+      "transform": [
+        {
+          "type": "fold",
+          "fields": ["ala_species_1875_2014", "melbourne_bioblitz_species_2014", "targeted_survey_species_2014_2015"],
+          "as": ["method_key", "species"]
+        },
+        {
+          "type": "formula",
+          "as": "method_index",
+          "expr": "indexof([\"ala_species_1875_2014\", \"melbourne_bioblitz_species_2014\", \"targeted_survey_species_2014_2015\"], datum.method_key)"
+        },
+        {
+          "type": "formula",
+          "as": "method_label",
+          "expr": "datum.method_index === 0 ? 'ALA records (1875\u20132014)' : datum.method_index === 1 ? 'Melbourne BioBlitz (2014)' : 'Targeted survey (2014\u20132015)'"
+        }
+      ]
+    },
+    {
+      "name": "visible_points",
+      "source": "all_points",
+      "transform": [{"type": "filter", "expr": "!selectedOrder || datum.order === selectedOrder"}]
+    },
+    {
+      "name": "methods",
+      "source": "all_points",
+      "transform": [
+        {"type": "aggregate", "groupby": ["method_index", "method_label"]},
+        {"type": "collect", "sort": {"field": "method_index"}},
+        {
+          "type": "formula",
+          "as": "heading",
+          "expr": "datum.method_index === 0 ? ['ALA records', '(1875\u20132014)'] : datum.method_index === 1 ? ['BioBlitz', '(2014)'] : ['Targeted survey', '(2014\u20132015)']"
+        }
+      ]
+    },
+    {
+      "name": "legend_items",
+      "source": "orders",
+      "transform": [
+        {"type": "aggregate", "groupby": ["colour_key"]},
+        {"type": "collect", "sort": {"field": "colour_key"}},
+        {"type": "window", "ops": ["row_number"], "as": ["legend_index"]}
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "point",
+      "domain": {"data": "methods", "field": "method_index"},
+      "range": [{"signal": "plotLeft"}, {"signal": "plotRight"}]
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {"data": "visible_points", "field": "species"},
+      "range": [{"signal": "plotBottom"}, {"signal": "plotTop"}],
+      "zero": true,
+      "nice": true
+    },
+    {
+      "name": "colour",
+      "type": "ordinal",
+      "domain": {"data": "legend_items", "field": "colour_key"},
+      "range": ["#D48918", "#7152A3", "#287DB2", "#C45362", "#168F83", "#A2A7AA", "#668728", "#BD6E33"]
+    }
+  ],
+  "axes": [
+    {
+      "orient": "left",
+      "scale": "y",
+      "tickCount": 5,
+      "format": ",.0f",
+      "title": "Recorded species",
+      "titlePadding": 12,
+      "titleFont": "Source Sans 3",
+      "titleFontSize": 13,
+      "labelFont": "Source Sans 3",
+      "labelFontSize": 12,
+      "labelColor": "#555555",
+      "domain": false,
+      "tickColor": "#B9C5C4",
+      "grid": false,
+      "tickMinStep": 1,
+      "offset": {"signal": "-plotLeft"},
+      "titleX": -48,
+      "titleY": {"signal": "(plotTop + plotBottom) / 2"}
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"value": 0},
+          "y": {"value": 6},
+          "text": {
+            "signal": "width < 600 ? ['Colour identifies insect order;', 'grey lines are separate additional orders'] : 'Colour identifies insect order; grey lines are separate additional orders'"
+          },
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 600 ? 11 : 13"},
+          "fontWeight": {"value": 600},
+          "fill": {"value": "#444444"},
+          "baseline": {"value": "top"},
+          "lineHeight": {"value": 16}
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "from": {"data": "legend_items"},
+      "encode": {
+        "update": {
+          "x": {"signal": "8 + floor((datum.legend_index - 1) / legendRows) * width / legendColumns"},
+          "y": {"signal": "48 + ((datum.legend_index - 1) % legendRows) * 24"},
+          "size": {"value": 64},
+          "fill": {"scale": "colour", "field": "colour_key"},
+          "stroke": {"value": "#ffffff"},
+          "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "legend_items"},
+      "encode": {
+        "update": {
+          "x": {"signal": "22 + floor((datum.legend_index - 1) / legendRows) * width / legendColumns"},
+          "y": {"signal": "48 + ((datum.legend_index - 1) % legendRows) * 24"},
+          "text": {"field": "colour_key"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#555555"},
+          "baseline": {"value": "middle"},
+          "limit": {"signal": "width / legendColumns - 26"},
+          "tooltip": {"field": "colour_key"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"signal": "plotLeft"},
+          "y": {"signal": "plotTop - 36"},
+          "text": {"signal": "width < 600 ? ['All axes start at zero', selectedOrder ? 'Scale fits selected order' : 'Showing all orders'] : scaleCaption"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 600 ? 10 : 12"},
+          "fill": {"value": "#666666"},
+          "limit": {"signal": "width < 600 ? width - plotLeft : plotRight - plotLeft"},
+          "baseline": {"value": "bottom"},
+          "lineHeight": {"value": 15}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "from": {"data": "methods"},
+      "encode": {
+        "update": {
+          "x": {"scale": "x", "field": "method_index"},
+          "y": {"signal": "plotTop"},
+          "y2": {"signal": "plotBottom"},
+          "stroke": {"value": "#D5DEDD"},
+          "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {"signal": "plotLeft"},
+          "x2": {"signal": "plotRight"},
+          "y": {"scale": "y", "value": 0},
+          "stroke": {"value": "#B9C5C4"},
+          "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "type": "group",
+      "from": {"facet": {"name": "order_series", "data": "visible_points", "groupby": ["order"]}},
+      "encode": {"update": {"zindex": {"signal": "focusOrder === datum.order ? 1 : 0"}}},
+      "marks": [
+        {
+          "name": "order_paths",
+          "type": "line",
+          "from": {"data": "order_series"},
+          "sort": {"field": "datum.method_index"},
+          "encode": {
+            "enter": {"interpolate": {"value": "linear"}, "strokeCap": {"value": "round"}},
+            "update": {
+              "x": {"scale": "x", "field": "method_index"},
+              "y": {"scale": "y", "field": "species"},
+              "stroke": {"scale": "colour", "field": "colour_key"},
+              "strokeWidth": {"signal": "focusOrder === datum.order ? 3.5 : 2"},
+              "opacity": {"signal": "focusOrder && focusOrder !== datum.order ? 0.14 : 0.85"},
+              "cursor": {"value": "pointer"},
+              "tooltip": {
+                "signal": "{'Insect group': datum.common_group, 'Order': datum.order, 'ALA records (1875\u20132014)': datum.ala_species_1875_2014, 'BioBlitz (2014)': datum.melbourne_bioblitz_species_2014, 'Targeted survey (2014\u20132015)': datum.targeted_survey_species_2014_2015, 'Geography': datum.geography, 'Source': datum.source_table}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "order_points",
+      "type": "symbol",
+      "from": {"data": "visible_points"},
+      "encode": {
+        "update": {
+          "x": {"scale": "x", "field": "method_index"},
+          "y": {"scale": "y", "field": "species"},
+          "size": {"signal": "focusOrder === datum.order ? 110 : 48"},
+          "fill": {"scale": "colour", "field": "colour_key"},
+          "stroke": {"value": "#ffffff"},
+          "strokeWidth": {"value": 1},
+          "opacity": {"signal": "focusOrder && focusOrder !== datum.order ? 0.14 : 1"},
+          "cursor": {"value": "pointer"},
+          "tooltip": {
+            "signal": "{'Insect group': datum.common_group, 'Order': datum.order, 'Recording method': datum.method_label, 'Recorded species': datum.species, 'Geography': datum.geography, 'Source': datum.source_table}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "visible_points"},
+      "encode": {
+        "update": {
+          "x": {"scale": "x", "field": "method_index"},
+          "y": {"scale": "y", "field": "species"},
+          "dy": {"signal": "datum.species === 0 ? -16 : 16"},
+          "text": {"signal": "format(datum.species, ',')"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"value": 13},
+          "fontWeight": {"value": 700},
+          "align": {"value": "center"},
+          "baseline": {"value": "middle"},
+          "fill": {"value": "#252525"},
+          "opacity": {"signal": "selectedOrder ? 1 : 0"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "methods"},
+      "encode": {
+        "update": {
+          "x": {"scale": "x", "field": "method_index"},
+          "y": {"signal": "plotBottom + 28"},
+          "text": {"field": "heading"},
+          "font": {"value": "Source Sans 3"},
+          "fontSize": {"signal": "width < 600 ? 11 : 13"},
+          "fontWeight": {"value": 600},
+          "lineHeight": {"value": 18},
+          "align": {"value": "center"},
+          "baseline": {"value": "top"},
+          "fill": {"value": "#444444"}
+        }
+      }
+    }
+  ],
+  "config": {
+    "font": "Source Sans 3"
+  }
+}
