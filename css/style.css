@@ -52,7 +52,7 @@ body {
     border-top: 1px solid #dddddd;
 }
 
-/* These elements have exactly the same outer width and left edge. */
+/* These elements share the same outer width and left edge. */
 .story-text,
 .seasonal-chart-row,
 .chart-container,
@@ -100,12 +100,31 @@ body {
 .seasonal-chart-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--chart-gap);
+    grid-template-rows: auto auto;
+    column-gap: var(--chart-gap);
+    row-gap: 18px;
     align-items: stretch;
 }
 
+/*
+ * Each card spans the same two parent rows:
+ * row 1 contains the chart;
+ * row 2 contains its annotation.
+ *
+ * Sharing those rows aligns both annotation boxes automatically,
+ * including when chart heights or annotation text lengths differ.
+ */
 .seasonal-chart-container {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
     margin-top: 0;
+}
+
+/* Override the annotation margins supplied by visualisation.js. */
+.seasonal-chart-container > .chart-insight {
+    margin: 0 0 22px;
+    align-self: stretch;
 }
 
 .chart4-container,
